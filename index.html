@@ -91,6 +91,12 @@
         .input-group button.gray:hover {
             background: #5a687a;
         }
+        .input-group button.red {
+            background: #e74c3c;
+        }
+        .input-group button.red:hover {
+            background: #c0392b;
+        }
         .frames-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -430,6 +436,9 @@
             gap: 8px;
             flex-wrap: wrap;
         }
+        .hidden {
+            display: none !important;
+        }
         @media(max-width:600px) {
             .frames-grid {
                 grid-template-columns: 1fr;
@@ -478,9 +487,10 @@
                     <input type="text" id="roomInput" placeholder="4 цифры" maxlength="4" style="max-width:100px;">
                     <button id="createBtn" class="green">Создать</button>
                     <button id="joinBtn" class="blue">Войти</button>
-                    <button id="leaveBtn" class="gray" style="display:none;">Выйти</button>
+                    <button id="leaveBtn" class="red hidden">Выйти</button>
                 </div>
                 <div id="roomInfo" style="font-size:12px;color:#888;margin-top:4px;">💡 Создайте комнату (4 цифры)</div>
+                <div id="connectStatus" style="font-size:12px;margin-top:4px;"></div>
             </div>
 
             <!-- Игра -->
@@ -550,49 +560,16 @@
         </div>
     </div>
 
-    <div class="footer">
-        OMDb + Kinopoisk API · Firebase Realtime Database (бесплатно)
-    </div>
+    <div class="footer">OMDb + Kinopoisk API · PeerJS (WebRTC)</div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js">
     </script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js">
-    </script>
-
     <script>
         // ============================================================
-        //  FIREBASE КОНФИГ (БЕСПЛАТНЫЙ ТЕСТОВЫЙ)
+        //  ПРОСТАЯ РАБОЧАЯ ВЕРСИЯ С PEERJS
         // ============================================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyDYu2h2q6B3o9x7wX8fQ4k5n6m7o8p9q0r1s2t3u4",
-            authDomain: "movie-game-12345.firebaseapp.com",
-            databaseURL: "https://movie-game-12345-default-rtdb.firebaseio.com",
-            projectId: "movie-game-12345",
-            storageBucket: "movie-game-12345.appspot.com",
-            messagingSenderId: "123456789012",
-            appId: "1:123456789012:web:abcdef1234567890"
-        };
 
-        // ============================================================
-        //  ИНИЦИАЛИЗАЦИЯ FIREBASE
-        // ============================================================
-        let db = null;
-        let connected = false;
-        let roomRef = null;
-
-        try {
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.database();
-            console.log('✅ Firebase инициализирован');
-        } catch (e) {
-            console.error('❌ Ошибка Firebase:', e);
-            document.getElementById('feedback').textContent = '❌ Ошибка Firebase: ' + e.message;
-        }
-
-        // ============================================================
-        //  КОНФИГ
-        // ============================================================
+        // ---------- КОНФИГ ----------
         const OMDB = 'https://www.omdbapi.com/';
         const KP = 'https://kinopoiskapiunofficial.tech/api';
         const WORDS = ['интерстеллар', 'матрица', 'титаник', 'аватар', 'гладиатор',
@@ -602,9 +579,7 @@
             'гарри поттер', 'пираты карибского моря', 'терминатор'
         ];
 
-        // ============================================================
-        //  DOM
-        // ============================================================
+        // ---------- DOM ----------
         const $ = id => document.getElementById(id);
         const omdbKey = $('omdbKey'),
             kpKey = $('kpKey'),
@@ -615,6 +590,7 @@
             joinBtn = $('joinBtn'),
             leaveBtn = $('leaveBtn'),
             roomInfo = $('roomInfo'),
+            connectStatus = $('connectStatus'),
             roomCodeDisplay = $('roomCodeDisplay'),
             playerCount = $('playerCount'),
             statusDot = $('statusDot');
@@ -645,9 +621,7 @@
             errorsEl = $('errors'),
             resetStats = $('resetStats');
 
-        // ============================================================
-        //  СОСТОЯНИЕ
-        // ============================================================
+        // ---------- СОСТОЯНИЕ ----------
         let film = null,
             omdb = null,
             filmId = null,
@@ -662,12 +636,14 @@
         let hints = { r: false, y: false, d: false };
         let usedWords = [];
         let myId = 'p' + Date.now() + Math.random().toString(36).slice(2, 6);
-        let players = {};
-        let gameRef = null;
 
-        // ============================================================
-        //  СТАТИСТИКА
-        // ============================================================
+        // PeerJS
+        let peer = null;
+        let conn = null;
+        let players = {};
+        let gameData = {};
+
+        // ---------- СТАТИСТИКА ----------
         function updateStats() {
             attemptsEl.textContent = stats.a;
             winsEl.textContent = stats.w;
@@ -689,9 +665,7 @@
             updateStats();
             addChat('📊 Статистика сброшена', 'system'); };
 
-        // ============================================================
-        //  ЧАТ
-        // ============================================================
+        // ---------- ЧАТ ----------
         function addChat(text, type = '', player = null) {
             const d = document.createElement('div');
             d.className = 'msg' + (type ? ' ' + type : '');
@@ -709,14 +683,12 @@
         }
 
         function updateOnline() {
-            const count = Object.keys(players).length;
+            const count = Object.keys(players).length || (isConnected ? 1 : 0);
             onlineCount.textContent = '👤 ' + count;
             playerCount.textContent = '👤 ' + count;
         }
 
-        // ============================================================
-        //  КЛЮЧИ
-        // ============================================================
+        // ---------- КЛЮЧИ ----------
         function getOmdb() { return omdbKey.value.trim() || localStorage.getItem('omdb') || ''; }
 
         function getKp() { return kpKey.value.trim() || localStorage.getItem('kp') || ''; }
@@ -745,9 +717,7 @@
             } catch (e) { keyStatus.textContent = '❌ Ошибка: ' + e.message; }
         };
 
-        // ============================================================
-        //  API
-        // ============================================================
+        // ---------- API ----------
         async function kpSearch(title) {
             const k = getKp();
             if (!k) return null;
@@ -803,9 +773,7 @@
             return String(Math.floor(Math.random() * 20000000) + 1).padStart(7, '0');
         }
 
-        // ============================================================
-        //  ИГРА
-        // ============================================================
+        // ---------- ИГРА ----------
         function showFilm(data, omdbData) {
             if (!data) {
                 titleDisplay.className = 'hidden-title';
@@ -968,7 +936,7 @@
                     feedback.textContent = '🖼️ Кадры не найдены';
                     feedback.className = 'feedback error'; }
 
-                // Синхронизация с Firebase
+                // Синхронизация с комнатой
                 if (isConnected) syncGame();
 
             } catch (e) { feedback.textContent = '❌ ' + e.message;
@@ -982,9 +950,7 @@
         newBtn.onclick = () => loadFilm('random');
         easyBtn.onclick = () => loadFilm('easy');
 
-        // ============================================================
-        //  УГАДЫВАНИЕ
-        // ============================================================
+        // ---------- УГАДЫВАНИЕ ----------
         async function handleGuess() {
             if (loading || !film) { feedback.textContent = '❌ Сначала загрузите фильм';
                 feedback.className = 'feedback error'; return; }
@@ -1012,7 +978,7 @@
                 guessInput.disabled = true;
                 guessBtn.disabled = true;
                 if (isConnected) {
-                    sendToFirebase('guess', { name: myName, guess: g, win: true });
+                    sendToPeer('guess', { name: myName, guess: g, win: true });
                     addChat('🎯 <strong>' + myName + '</strong> угадал!', 'system');
                 }
             } else {
@@ -1022,7 +988,7 @@
                 guessInput.value = '';
                 guessInput.focus();
                 if (isConnected) {
-                    sendToFirebase('guess', { name: myName, guess: g, win: false });
+                    sendToPeer('guess', { name: myName, guess: g, win: false });
                     addChat('❌ <strong>' + myName + '</strong>: ' + g + ' — не угадал', '');
                 }
             }
@@ -1033,9 +999,7 @@
         guessInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault();
                 handleGuess(); } });
 
-        // ============================================================
-        //  ПОДБОР
-        // ============================================================
+        // ---------- ПОДБОР ----------
         suggestBtn.onclick = async function() {
             const q = guessInput.value.trim();
             if (!q) { feedback.textContent = '✏️ Введите слово';
@@ -1073,9 +1037,7 @@
             }
         });
 
-        // ============================================================
-        //  ПРОПУСК
-        // ============================================================
+        // ---------- ПРОПУСК ----------
         skipBtn.onclick = function() {
             if (!film || guessed) return;
             const name = film.nameRu || film.nameEn || omdb?.Title || 'Без названия';
@@ -1087,214 +1049,349 @@
             guessInput.disabled = true;
             guessBtn.disabled = true;
             if (isConnected) {
-                sendToFirebase('skip', { name: myName, title: name });
+                sendToPeer('skip', { name: myName, title: name });
                 addChat('⏭️ <strong>' + myName + '</strong> пропустил. Это был "' + name + '"', 'system');
             }
             if (isConnected) syncGame();
         };
 
         // ============================================================
-        //  МУЛЬТИПЛЕЕР — FIREBASE
+        //  МУЛЬТИПЛЕЕР — PEERJS (РАБОТАЕТ ЧЕРЕЗ ИНТЕРНЕТ)
         // ============================================================
+
         function syncGame() {
-            if (!room || !isConnected || !gameRef) return;
+            if (!isConnected || !conn) return;
             const data = {
                 film: film,
                 omdb: omdb,
                 filmId: filmId,
                 guessed: guessed,
-                players: players,
-                host: isHost ? myId : null,
-                timestamp: Date.now()
+                players: players
             };
-            gameRef.set(data);
+            gameData = data;
+            sendToPeer('sync', data);
         }
 
-        function sendToFirebase(type, data) {
-            if (!room || !isConnected || !gameRef) return;
-            const msg = {
-                type: type,
-                data: data,
-                from: myId,
-                name: myName,
-                timestamp: Date.now()
-            };
-            gameRef.child('messages').push(msg);
+        function sendToPeer(type, data) {
+            if (!conn || conn.open === false) return;
+            conn.send({ type: type, data: data, from: myId, name: myName });
         }
 
-        function setupFirebaseRoom(code, host = false) {
-            if (!db) {
-                feedback.textContent = '❌ Firebase не инициализирован';
+        function initPeer() {
+            if (peer) {
+                peer.destroy();
+                peer = null;
+            }
+            peer = new Peer(undefined, {
+                debug: 0,
+                config: {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' }
+                    ]
+                }
+            });
+
+            peer.on('open', (id) => {
+                console.log('Peer открыт:', id);
+                if (isHost) {
+                    roomCodeDisplay.textContent = id.slice(0, 8);
+                    roomDisplay.style.display = 'inline-flex';
+                    connectStatus.textContent = '✅ Ожидание подключения... Код: ' + id.slice(0, 8);
+                    connectStatus.style.color = '#f39c12';
+                    statusDot.className = 'status-dot waiting';
+                    roomInfo.innerHTML = '🏠 Вы хост. Код: <strong>' + id.slice(0, 8) + '</strong>';
+                }
+            });
+
+            peer.on('connection', (c) => {
+                console.log('Входящее подключение от:', c.peer);
+                conn = c;
+                setupConnection(c);
+            });
+
+            peer.on('error', (err) => {
+                console.error('Peer ошибка:', err);
+                if (err.type === 'unavailable-id') {
+                    connectStatus.textContent = '❌ Ошибка: попробуйте другой код';
+                    connectStatus.style.color = '#e74c3c';
+                }
+            });
+        }
+
+        function setupConnection(c) {
+            conn = c;
+            isConnected = true;
+            statusDot.className = 'status-dot online';
+            leaveBtn.classList.remove('hidden');
+            createBtn.style.display = 'none';
+            joinBtn.style.display = 'none';
+            chatInput.disabled = false;
+            chatSend.disabled = false;
+
+            if (!isHost) {
+                roomCodeDisplay.textContent = room;
+                roomDisplay.style.display = 'inline-flex';
+                roomInfo.innerHTML = '🏠 Подключено к комнате <strong>' + room + '</strong>';
+                connectStatus.textContent = '✅ Подключено!';
+                connectStatus.style.color = '#2ecc71';
+                feedback.textContent = '✅ Подключено к комнате ' + room;
+                feedback.className = 'feedback success';
+                addChat('👋 Вы вошли как <strong>' + myName + '</strong>', 'system');
+            }
+
+            c.on('data', (data) => {
+                handlePeerData(data);
+            });
+
+            c.on('close', () => {
+                isConnected = false;
+                statusDot.className = 'status-dot offline';
+                connectStatus.textContent = '❌ Соединение разорвано';
+                connectStatus.style.color = '#e74c3c';
+                addChat('🔌 Соединение разорвано', 'system');
+                feedback.textContent = '❌ Соединение разорвано';
+                feedback.className = 'feedback error';
+                leaveRoom();
+            });
+
+            // Если хост, отправляем состояние через секунду
+            if (isHost) {
+                setTimeout(() => {
+                    players[myId] = { name: myName, guessed: false };
+                    updateOnline();
+                    syncGame();
+                }, 500);
+            }
+        }
+
+        function handlePeerData(data) {
+            console.log('Получено:', data);
+
+            switch (data.type) {
+                case 'join':
+                    if (data.data && data.data.id) {
+                        players[data.data.id] = { name: data.data.name, guessed: false };
+                        updateOnline();
+                        addChat('👤 <strong>' + data.data.name + '</strong> присоединился', 'system');
+                        syncGame();
+                    }
+                    break;
+
+                case 'sync':
+                    if (data.data && !isHost) {
+                        const d = data.data;
+                        if (d.film && d.filmId) {
+                            film = d.film;
+                            omdb = d.omdb;
+                            filmId = d.filmId;
+                            guessed = d.guessed || false;
+                            showFilm(film, omdb);
+                            if (guessed) {
+                                const name = film.nameRu || film.nameEn || omdb?.Title || 'Без названия';
+                                revealTitle(name);
+                                guessInput.disabled = true;
+                                guessBtn.disabled = true;
+                                feedback.textContent = '🎯 Фильм уже угадан!';
+                                feedback.className = 'feedback success';
+                            } else {
+                                kpFrames(filmId).then(fr => { if (fr.length) showFrames(fr); });
+                                guessInput.disabled = false;
+                                guessBtn.disabled = false;
+                            }
+                        }
+                        if (d.players) {
+                            players = d.players;
+                            updateOnline();
+                        }
+                    }
+                    break;
+
+                case 'guess':
+                    if (data.data) {
+                        if (data.data.win) {
+                            addChat('🎯 <strong>' + data.data.name + '</strong> угадал!', 'system');
+                            if (data.data.name !== myName) {
+                                guessed = true;
+                                const name = film?.nameRu || film?.nameEn || omdb?.Title || 'Без названия';
+                                revealTitle(name);
+                                guessInput.disabled = true;
+                                guessBtn.disabled = true;
+                                feedback.textContent = '🎯 ' + data.data.name + ' угадал!';
+                                feedback.className = 'feedback success';
+                            }
+                        } else {
+                            addChat('❌ <strong>' + data.data.name + '</strong>: ' + data.data.guess + ' — не угадал', '');
+                        }
+                    }
+                    break;
+
+                case 'skip':
+                    if (data.data) {
+                        addChat('⏭️ <strong>' + data.data.name + '</strong> пропустил. Это был "' + data.data.title + '"',
+                        'system');
+                        if (data.data.name !== myName && film) {
+                            const name = film.nameRu || film.nameEn || omdb?.Title || 'Без названия';
+                            revealTitle(name);
+                            guessed = true;
+                            guessInput.disabled = true;
+                            guessBtn.disabled = true;
+                            feedback.textContent = '⏭️ ' + data.data.name + ' пропустил. Это "' + name + '"';
+                            feedback.className = 'feedback info';
+                        }
+                    }
+                    break;
+
+                case 'chat':
+                    if (data.data) {
+                        addChat('💬 <strong>' + data.data.name + '</strong>: ' + data.data.message, '');
+                    }
+                    break;
+
+                case 'player_left':
+                    if (data.data && data.data.id) {
+                        delete players[data.data.id];
+                        updateOnline();
+                        addChat('👤 <strong>' + data.data.name + '</strong> покинул комнату', 'system');
+                    }
+                    break;
+            }
+        }
+
+        // ---------- УПРАВЛЕНИЕ КОМНАТОЙ ----------
+        function createRoom() {
+            const code = roomInput.value.trim();
+            if (!code || !/^\d{4}$/.test(code)) {
+                feedback.textContent = '❌ Введите 4 цифры';
+                feedback.className = 'feedback error';
+                return;
+            }
+            if (!getOmdb() || !getKp()) {
+                feedback.textContent = '❌ Введите API ключи';
                 feedback.className = 'feedback error';
                 return;
             }
 
             room = code;
-            isHost = host;
-            isConnected = true;
+            isHost = true;
+            players = {};
+            players[myId] = { name: myName, guessed: false };
+            updateOnline();
+
             roomCodeDisplay.textContent = code;
-            statusDot.className = 'status-dot online';
+            roomDisplay.style.display = 'inline-flex';
+            statusDot.className = 'status-dot waiting';
             createBtn.style.display = 'none';
             joinBtn.style.display = 'none';
-            leaveBtn.style.display = 'inline-block';
+            leaveBtn.classList.remove('hidden');
             chatInput.disabled = false;
             chatSend.disabled = false;
-            roomInfo.innerHTML = '🏠 Комната: <strong>' + code + '</strong> ' + (host ? '(Вы хост)' : '(Вы гость)');
-            feedback.textContent = '✅ Подключено к комнате ' + code;
-            feedback.className = 'feedback success';
+            roomInfo.innerHTML = '🏠 Создание комнаты <strong>' + code + '</strong>...';
+            connectStatus.textContent = '⏳ Подключение...';
+            connectStatus.style.color = '#f39c12';
+            feedback.textContent = '⏳ Создание комнаты...';
+            feedback.className = 'feedback loading';
 
-            // Создаём ссылку на комнату
-            gameRef = db.ref('rooms/' + code);
+            initPeer();
+            // Peer ID будет показан после открытия
+        }
 
-            if (host) {
-                // Хост: инициализируем комнату
-                players = {};
-                players[myId] = { name: myName, guessed: false };
-                updateOnline();
-                addChat('🎉 Комната ' + code + ' создана!', 'system');
-                addChat('👋 Вы хост: <strong>' + myName + '</strong>', 'system');
-
-                // Устанавливаем начальные данные
-                const initData = {
-                    players: players,
-                    host: myId,
-                    created: Date.now()
-                };
-                gameRef.set(initData);
-
-                // Загружаем фильм
-                setTimeout(() => loadFilm('random'), 500);
-            } else {
-                // Гость: ждём данные от хоста
-                addChat('👋 Вы вошли как <strong>' + myName + '</strong>', 'system');
-                addChat('⏳ Ожидание данных от хоста...', 'system');
-
-                // Отправляем себя в список игроков
-                gameRef.child('players/' + myId).set({ name: myName, guessed: false });
+        function joinRoom() {
+            const code = roomInput.value.trim();
+            if (!code || !/^\d{4}$/.test(code)) {
+                feedback.textContent = '❌ Введите 4 цифры';
+                feedback.className = 'feedback error';
+                return;
+            }
+            if (!getOmdb() || !getKp()) {
+                feedback.textContent = '❌ Введите API ключи';
+                feedback.className = 'feedback error';
+                return;
             }
 
-            // Слушаем изменения
-            gameRef.on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (!data) return;
+            room = code;
+            isHost = false;
+            players = {};
+            players[myId] = { name: myName, guessed: false };
+            updateOnline();
 
-                // Обновляем игроков
-                if (data.players) {
-                    players = data.players;
-                    updateOnline();
-                    // Если нас нет в списке, добавляем
-                    if (!players[myId] && !isHost) {
-                        gameRef.child('players/' + myId).set({ name: myName, guessed: false });
-                    }
-                }
+            roomCodeDisplay.textContent = code;
+            roomDisplay.style.display = 'inline-flex';
+            statusDot.className = 'status-dot waiting';
+            createBtn.style.display = 'none';
+            joinBtn.style.display = 'none';
+            leaveBtn.classList.remove('hidden');
+            chatInput.disabled = false;
+            chatSend.disabled = false;
+            roomInfo.innerHTML = '🏠 Подключение к комнате <strong>' + code + '</strong>...';
+            connectStatus.textContent = '⏳ Подключение...';
+            connectStatus.style.color = '#f39c12';
+            feedback.textContent = '⏳ Подключение к комнате...';
+            feedback.className = 'feedback loading';
 
-                // Обновляем игру (только для гостей)
-                if (!isHost && data.film && data.filmId) {
-                    const oldGuessed = guessed;
-                    film = data.film;
-                    omdb = data.omdb;
-                    filmId = data.filmId;
-                    guessed = data.guessed || false;
+            // Инициализируем Peer и подключаемся
+            if (peer) {
+                peer.destroy();
+                peer = null;
+            }
 
-                    showFilm(film, omdb);
-                    if (guessed) {
-                        const name = film.nameRu || film.nameEn || omdb?.Title || 'Без названия';
-                        revealTitle(name);
-                        guessInput.disabled = true;
-                        guessBtn.disabled = true;
-                        feedback.textContent = '🎯 Фильм уже угадан!';
-                        feedback.className = 'feedback success';
-                    } else {
-                        kpFrames(filmId).then(fr => { if (fr.length) showFrames(fr); });
-                        guessInput.disabled = false;
-                        guessBtn.disabled = false;
-                    }
-                }
-
-                // Обновляем хост
-                if (data.host && data.host !== myId && !isHost) {
-                    // Мы гость, хост есть
+            peer = new Peer(undefined, {
+                debug: 0,
+                config: {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' }
+                    ]
                 }
             });
 
-            // Слушаем сообщения чата
-            gameRef.child('messages').on('child_added', (snapshot) => {
-                const msg = snapshot.val();
-                if (msg.from === myId) return; // Свои сообщения игнорируем
-
-                switch (msg.type) {
-                    case 'guess':
-                        if (msg.data) {
-                            if (msg.data.win) {
-                                addChat('🎯 <strong>' + msg.data.name + '</strong> угадал!', 'system');
-                                if (msg.data.name !== myName) {
-                                    guessed = true;
-                                    const name = film?.nameRu || film?.nameEn || omdb?.Title || 'Без названия';
-                                    revealTitle(name);
-                                    guessInput.disabled = true;
-                                    guessBtn.disabled = true;
-                                    feedback.textContent = '🎯 ' + msg.data.name + ' угадал!';
-                                    feedback.className = 'feedback success';
-                                }
-                            } else {
-                                addChat('❌ <strong>' + msg.data.name + '</strong>: ' + msg.data.guess + ' — не угадал',
-                                '');
-                            }
-                        }
-                        break;
-
-                    case 'skip':
-                        if (msg.data) {
-                            addChat('⏭️ <strong>' + msg.data.name + '</strong> пропустил. Это был "' + msg.data.title +
-                                '"', 'system');
-                            if (msg.data.name !== myName && film) {
-                                const name = film.nameRu || film.nameEn || omdb?.Title || 'Без названия';
-                                revealTitle(name);
-                                guessed = true;
-                                guessInput.disabled = true;
-                                guessBtn.disabled = true;
-                                feedback.textContent = '⏭️ ' + msg.data.name + ' пропустил. Это "' + name + '"';
-                                feedback.className = 'feedback info';
-                            }
-                        }
-                        break;
-
-                    case 'chat':
-                        if (msg.data) {
-                            addChat('💬 <strong>' + msg.data.name + '</strong>: ' + msg.data.message, '');
-                        }
-                        break;
-
-                    case 'player_joined':
-                        if (msg.data) {
-                            if (!players[msg.data.id]) {
-                                players[msg.data.id] = { name: msg.data.name, guessed: false };
-                                updateOnline();
-                                addChat('👤 <strong>' + msg.data.name + '</strong> присоединился', 'system');
-                            }
-                        }
-                        break;
+            peer.on('open', (id) => {
+                console.log('Peer открыт:', id);
+                // Подключаемся к хосту по коду комнаты
+                const targetId = code;
+                const c = peer.connect(targetId);
+                if (c) {
+                    setupConnection(c);
+                    // Отправляем информацию о себе
+                    c.on('open', () => {
+                        c.send({ type: 'join', data: { id: myId, name: myName } });
+                        // Запрашиваем состояние
+                        setTimeout(() => {
+                            c.send({ type: 'sync', data: { request: true } });
+                        }, 300);
+                    });
+                } else {
+                    connectStatus.textContent = '❌ Комната не найдена';
+                    connectStatus.style.color = '#e74c3c';
+                    feedback.textContent = '❌ Комната не найдена';
+                    feedback.className = 'feedback error';
+                    leaveRoom();
                 }
             });
 
-            // Обработка отключения
-            gameRef.onDisconnect().update({
-                ['players/' + myId]: null
+            peer.on('error', (err) => {
+                console.error('Peer ошибка:', err);
+                if (err.type === 'peer-unavailable') {
+                    connectStatus.textContent = '❌ Комната не найдена';
+                    connectStatus.style.color = '#e74c3c';
+                    feedback.textContent = '❌ Комната не найдена';
+                    feedback.className = 'feedback error';
+                    leaveRoom();
+                }
             });
         }
 
-        // ============================================================
-        //  УПРАВЛЕНИЕ КОМНАТОЙ
-        // ============================================================
         function leaveRoom() {
-            if (gameRef) {
-                // Удаляем игрока из списка
-                if (room) {
-                    const ref = db.ref('rooms/' + room + '/players/' + myId);
-                    ref.remove();
-                }
-                gameRef.off();
-                gameRef = null;
+            if (conn) {
+                try {
+                    conn.send({ type: 'player_left', data: { id: myId, name: myName } });
+                    conn.close();
+                } catch (e) {}
+                conn = null;
+            }
+            if (peer) {
+                try { peer.destroy(); } catch (e) {}
+                peer = null;
             }
 
             isConnected = false;
@@ -1302,79 +1399,23 @@
             room = null;
             players = {};
             roomCodeDisplay.textContent = '----';
+            roomDisplay.style.display = 'none';
             statusDot.className = 'status-dot offline';
             createBtn.style.display = 'inline-block';
             joinBtn.style.display = 'inline-block';
-            leaveBtn.style.display = 'none';
+            leaveBtn.classList.add('hidden');
             chatInput.disabled = true;
             chatSend.disabled = true;
             roomInfo.innerHTML = '💡 Создайте комнату (4 цифры)';
+            connectStatus.textContent = '';
             feedback.textContent = '💡 Вы покинули комнату';
             feedback.className = 'feedback info';
             updateOnline();
             addChat('🔌 Вы покинули комнату', 'system');
         }
 
-        createBtn.onclick = function() {
-            const code = roomInput.value.trim();
-            if (!code || !/^\d{4}$/.test(code)) {
-                feedback.textContent = '❌ Введите 4 цифры';
-                feedback.className = 'feedback error';
-                return;
-            }
-            if (!getOmdb() || !getKp()) {
-                feedback.textContent = '❌ Введите API ключи';
-                feedback.className = 'feedback error';
-                return;
-            }
-            if (!db) {
-                feedback.textContent = '❌ Firebase не инициализирован';
-                feedback.className = 'feedback error';
-                return;
-            }
-
-            // Проверяем, существует ли комната
-            const ref = db.ref('rooms/' + code);
-            ref.once('value', (snapshot) => {
-                if (snapshot.exists()) {
-                    feedback.textContent = '⚠️ Комната существует. Войдите как гость.';
-                    feedback.className = 'feedback error';
-                } else {
-                    setupFirebaseRoom(code, true);
-                }
-            });
-        };
-
-        joinBtn.onclick = function() {
-            const code = roomInput.value.trim();
-            if (!code || !/^\d{4}$/.test(code)) {
-                feedback.textContent = '❌ Введите 4 цифры';
-                feedback.className = 'feedback error';
-                return;
-            }
-            if (!getOmdb() || !getKp()) {
-                feedback.textContent = '❌ Введите API ключи';
-                feedback.className = 'feedback error';
-                return;
-            }
-            if (!db) {
-                feedback.textContent = '❌ Firebase не инициализирован';
-                feedback.className = 'feedback error';
-                return;
-            }
-
-            // Проверяем, существует ли комната
-            const ref = db.ref('rooms/' + code);
-            ref.once('value', (snapshot) => {
-                if (!snapshot.exists()) {
-                    feedback.textContent = '❌ Комната не найдена. Создайте её.';
-                    feedback.className = 'feedback error';
-                } else {
-                    setupFirebaseRoom(code, false);
-                }
-            });
-        };
-
+        createBtn.onclick = createRoom;
+        joinBtn.onclick = joinRoom;
         leaveBtn.onclick = leaveRoom;
 
         // Ввод только цифр
@@ -1382,13 +1423,11 @@
             this.value = this.value.replace(/\D/g, '').slice(0, 4);
         });
 
-        // ============================================================
-        //  ЧАТ
-        // ============================================================
+        // ---------- ЧАТ ----------
         chatSend.onclick = function() {
             const msg = chatInput.value.trim();
             if (!msg || !isConnected) return;
-            sendToFirebase('chat', { name: myName, message: msg });
+            sendToPeer('chat', { name: myName, message: msg });
             addChat('💬 <strong>' + myName + '</strong>: ' + msg, '');
             chatInput.value = '';
         };
@@ -1400,13 +1439,7 @@
             }
         });
 
-        // ============================================================
-        //  ИНИЦИАЛИЗАЦИЯ
-        // ============================================================
-        // Восстанавливаем имя
-        try { myName = localStorage.getItem('player_name') || 'Игрок' + Math.floor(Math.random() * 100); } catch (e) {}
-        setInterval(() => { try { localStorage.setItem('player_name', myName); } catch (e) {} }, 5000);
-
+        // ---------- ИНИЦИАЛИЗАЦИЯ ----------
         // Восстанавливаем ключи
         if (localStorage.getItem('omdb')) omdbKey.value = localStorage.getItem('omdb');
         if (localStorage.getItem('kp')) kpKey.value = localStorage.getItem('kp');
@@ -1416,11 +1449,9 @@
             if (getOmdb() && getKp()) testBtn.click();
         }, 500);
 
-        console.log('🎬 Угадай фильм — мультиплеер через Firebase');
-        console.log('📌 Код комнаты — 4 цифры');
+        console.log('🎬 Угадай фильм — мультиплеер через PeerJS');
+        console.log('📌 Код комнаты — 4 цифры (введите в поле)');
         console.log('👤 Ваш ID:', myId);
-        console.log('📝 Ваше имя:', myName);
-        console.log('🔥 Firebase:', firebaseConfig.databaseURL);
     </script>
 </body>
 </html>
