@@ -566,7 +566,7 @@
     </script>
     <script>
         // ============================================================
-        //  УПРОЩЁННАЯ ВЕРСИЯ С ТАЙМАУТАМИ
+        //  ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ ВЕРСИЯ
         // ============================================================
 
         // ---------- КОНФИГ ----------
@@ -774,7 +774,11 @@
             return String(Math.floor(Math.random() * 20000000) + 1).padStart(7, '0');
         }
 
-        // ---------- ИГРА ----------
+        // ============================================================
+        //  ИГРА — ПОЛНОСТЬЮ ПЕРЕПИСАНА
+        // ============================================================
+
+        // ---------- ПОКАЗ ИНФОРМАЦИИ О ФИЛЬМЕ ----------
         function showFilm(data, omdbData) {
             if (!data) {
                 titleDisplay.className = 'hidden-title';
@@ -787,20 +791,28 @@
                 ['hRating', 'hYear', 'hDirector'].forEach(id => { $(id).disabled = true; });
                 return;
             }
-            fYear.textContent = '📅 ' + (omdbData?.Year || data.year || '—');
-            fGenre.textContent = '🎭 ' + (omdbData?.Genre || (data.genres ? data.genres.map(g => g.genre).join(', ') : '—'));
-            fRuntime.textContent = '⏱️ ' + (omdbData?.Runtime || (data.filmLength ? data.filmLength + ' мин' : '—'));
+
+            // ГОД И ЖАНР СКРЫТЫ! Показываем только заглушки
+            fYear.textContent = '📅 —';
+            fGenre.textContent = '🎭 —';
+            fRuntime.textContent = '⏱️ —';
             fRating.textContent = '⭐ —';
             fDirector.textContent = '🎬 —';
+
             titleDisplay.className = 'hidden-title';
             titleDisplay.textContent = '???';
+
+            // Сбрасываем подсказки
             hints = { r: false, y: false, d: false };
-            ['hRating', 'hYear', 'hDirector'].forEach(id => {
-                $(id).disabled = false;
-                const labels = { hRating: '⭐ Рейтинг', hYear: '📅 Год', hDirector: '🎬 Режиссёр' };
-                $(id).textContent = labels[id];
-                $(id).className = '';
-            });
+            hRating.textContent = '⭐ Рейтинг';
+            hRating.className = '';
+            hRating.disabled = false;
+            hYear.textContent = '📅 Год';
+            hYear.className = '';
+            hYear.disabled = false;
+            hDirector.textContent = '🎬 Режиссёр';
+            hDirector.className = '';
+            hDirector.disabled = false;
         }
 
         function showFrames(imgs) {
@@ -837,17 +849,42 @@
             titleDisplay.textContent = name;
         }
 
+        // ---------- ПОДСКАЗКИ ----------
         function revealHint(type) {
             if (!film || guessed) return;
-            const map = {
-                r: { el: hRating, label: 'Рейтинг', val: omdb?.imdbRating || '—', field: fRating },
-                y: { el: hYear, label: 'Год', val: omdb?.Year || film?.year || '—', field: fYear },
-                d: { el: hDirector, label: 'Режиссёр', val: omdb?.Director || '—', field: fDirector }
-            };
-            const h = map[type];
+
+            // Если подсказка уже показана
             if (hints[type]) return;
+
+            const hintData = {
+                r: {
+                    el: hRating,
+                    label: 'Рейтинг',
+                    value: omdb?.imdbRating || film?.ratingImdb || film?.ratingKinopoisk || '—',
+                    field: fRating
+                },
+                y: {
+                    el: hYear,
+                    label: 'Год',
+                    value: omdb?.Year || film?.year || '—',
+                    field: fYear
+                },
+                d: {
+                    el: hDirector,
+                    label: 'Режиссёр',
+                    value: omdb?.Director || '—',
+                    field: fDirector
+                }
+            };
+
+            const h = hintData[type];
+            if (!h) return;
+
+            // Отмечаем как показанную
             hints[type] = true;
-            h.field.textContent = (type === 'y' ? '📅 ' : type === 'r' ? '⭐ ' : '🎬 ') + h.val;
+
+            // Показываем значение
+            h.field.textContent = (type === 'y' ? '📅 ' : type === 'r' ? '⭐ ' : '🎬 ') + h.value;
             h.el.textContent = '✅ ' + h.label;
             h.el.className = 'active';
         }
@@ -857,19 +894,26 @@
         hYear.onclick = function() { revealHint('y'); };
         hDirector.onclick = function() { revealHint('d'); };
 
+        // ---------- ЗАГРУЗКА ФИЛЬМА ----------
         async function loadFilm(mode) {
             const o = getOmdb(),
                 k = getKp();
-            if (!o || !k) { feedback.textContent = '❌ Введите API ключи';
-                feedback.className = 'feedback error'; return; }
+            if (!o || !k) {
+                feedback.textContent = '❌ Введите API ключи';
+                feedback.className = 'feedback error';
+                return;
+            }
             if (loading) return;
             loading = true;
             guessed = false;
             easyMode = mode === 'easy';
+
             feedback.textContent = '⏳ Загрузка...';
             feedback.className = 'feedback loading';
             guessInput.disabled = true;
             guessBtn.disabled = true;
+
+            // Очищаем всё
             showFilm(null, null);
             frames.innerHTML =
                 '<div class="frame-card"><div class="no-image">⏳ Загрузка...</div></div>'.repeat(3);
@@ -878,7 +922,9 @@
                 let movie = null,
                     omdbData = null,
                     id = null;
+
                 if (easyMode) {
+                    // Лёгкий режим — поиск по ключевым словам
                     let found = null;
                     for (let i = 0; i < 5 && !found; i++) {
                         if (usedWords.length >= WORDS.length) usedWords = [];
@@ -892,17 +938,22 @@
                             if (fr.length) { found = s; }
                         }
                     }
-                    if (!found) { feedback.textContent = '❌ Не найден';
+                    if (!found) {
+                        feedback.textContent = '❌ Не найден';
                         feedback.className = 'feedback error';
                         loading = false;
                         guessInput.disabled = false;
-                        guessBtn.disabled = false; return; }
+                        guessBtn.disabled = false;
+                        return;
+                    }
                     id = found.filmId;
                     movie = await kpFilm(id);
+                    // Пробуем получить данные из OMDb
                     const r = await fetch(OMDB + '?apikey=' + o + '&t=' + encodeURIComponent(found.nameRu || found.nameEn));
                     const d = await r.json();
                     if (d.Response === 'True') omdbData = d;
                 } else {
+                    // Сложный режим — случайный фильм через OMDb
                     let found = false;
                     for (let i = 0; i < 10 && !found; i++) {
                         const imdb = randImdb();
@@ -915,7 +966,7 @@
                                     id = s.filmId;
                                     movie = await kpFilm(id);
                                     omdbData = m;
-                                    // Сохраняем оригинальное название
+                                    // Сохраняем оригинальное название для поиска
                                     if (omdbData && omdbData.Title) {
                                         movie.originalTitle = omdbData.Title;
                                     }
@@ -924,39 +975,53 @@
                             }
                         }
                     }
-                    if (!found) { feedback.textContent = '❌ Не найден';
+                    if (!found) {
+                        feedback.textContent = '❌ Не найден';
                         feedback.className = 'feedback error';
                         loading = false;
                         guessInput.disabled = false;
-                        guessBtn.disabled = false; return; }
+                        guessBtn.disabled = false;
+                        return;
+                    }
                 }
 
+                // Сохраняем данные
                 film = movie;
                 filmId = id;
                 omdb = omdbData;
-                // Сохраняем оригинальное название
+
+                // Сохраняем все возможные названия для поиска
+                film.allTitles = [];
+                if (film.nameRu) film.allTitles.push(film.nameRu);
+                if (film.nameEn) film.allTitles.push(film.nameEn);
+                if (film.alternativeName) film.allTitles.push(film.alternativeName);
                 if (omdbData && omdbData.Title) {
+                    film.allTitles.push(omdbData.Title);
                     film.originalTitle = omdbData.Title;
                 }
-                // Также сохраняем все названия для поиска
-                film.allTitles = [];
-                if (film.nameRu) film.allTitles.push(film.nameRu.toLowerCase().trim());
-                if (film.nameEn) film.allTitles.push(film.nameEn.toLowerCase().trim());
-                if (film.alternativeName) film.allTitles.push(film.alternativeName.toLowerCase().trim());
-                if (omdbData && omdbData.Title) film.allTitles.push(omdbData.Title.toLowerCase().trim());
 
+                // Показываем фильм (ГОД И ЖАНР СКРЫТЫ)
                 showFilm(movie, omdbData);
+
+                // Загружаем кадры
                 const fr = await kpFrames(id);
-                if (fr.length) { showFrames(fr);
+                if (fr.length) {
+                    showFrames(fr);
                     feedback.textContent = '🎬 Какой фильм? (' + Math.min(fr.length, 3) + ' кадров)';
-                    feedback.className = 'feedback info'; } else { showFrames([]);
+                    feedback.className = 'feedback info';
+                } else {
+                    showFrames([]);
                     feedback.textContent = '🖼️ Кадры не найдены';
-                    feedback.className = 'feedback error'; }
+                    feedback.className = 'feedback error';
+                }
 
                 if (isConnected) syncGame();
 
-            } catch (e) { feedback.textContent = '❌ ' + e.message;
-                feedback.className = 'feedback error'; }
+            } catch (e) {
+                feedback.textContent = '❌ ' + e.message;
+                feedback.className = 'feedback error';
+            }
+
             loading = false;
             guessInput.disabled = false;
             guessBtn.disabled = false;
@@ -967,68 +1032,58 @@
         easyBtn.onclick = () => loadFilm('easy');
 
         // ============================================================
-        //  УГАДЫВАНИЕ — ПОЛНОСТЬЮ ПЕРЕПИСАНО
+        //  ПРОВЕРКА УГАДЫВАНИЯ — ИСПРАВЛЕНО
         // ============================================================
         function checkGuess(guessText) {
             if (!film) return false;
 
-            const guess = guessText.toLowerCase().trim();
+            const guess = guessText.trim();
             if (!guess) return false;
 
-            // Все возможные названия фильма
-            const titles = [];
+            // Собираем все названия для проверки
+            const allNames = [];
 
             // Основные названия
-            if (film.nameRu) titles.push(film.nameRu.toLowerCase().trim());
-            if (film.nameEn) titles.push(film.nameEn.toLowerCase().trim());
-            if (film.alternativeName) titles.push(film.alternativeName.toLowerCase().trim());
+            if (film.nameRu) allNames.push(film.nameRu);
+            if (film.nameEn) allNames.push(film.nameEn);
+            if (film.alternativeName) allNames.push(film.alternativeName);
 
             // Название из OMDb
-            if (omdb && omdb.Title) titles.push(omdb.Title.toLowerCase().trim());
+            if (omdb && omdb.Title) allNames.push(omdb.Title);
 
             // Оригинальное название
-            if (film.originalTitle) titles.push(film.originalTitle.toLowerCase().trim());
+            if (film.originalTitle) allNames.push(film.originalTitle);
+
+            // Все названия из массива
+            if (film.allTitles) {
+                film.allTitles.forEach(t => {
+                    if (t && !allNames.includes(t)) allNames.push(t);
+                });
+            }
 
             // Убираем дубликаты
-            const uniqueTitles = [...new Set(titles)];
+            const uniqueNames = [...new Set(allNames)];
 
-            // Проверяем точное совпадение
-            for (const title of uniqueTitles) {
-                if (guess === title) return true;
-            }
+            // Приводим к нижнему регистру для сравнения
+            const guessLower = guess.toLowerCase().trim();
 
-            // Проверяем вхождение (частичное совпадение)
-            for (const title of uniqueTitles) {
-                if (title.includes(guess) || guess.includes(title)) {
-                    // Если название длинное и содержит guess, считаем угаданным
-                    if (guess.length >= 3 && title.includes(guess)) return true;
-                    // Если guess длинный и содержит название
-                    if (title.length >= 3 && guess.includes(title)) return true;
-                }
-            }
+            // Проверяем каждое название
+            for (const name of uniqueNames) {
+                if (!name) continue;
+                const nameLower = name.toLowerCase().trim();
 
-            // Проверяем по словам (для длинных названий)
-            for (const title of uniqueTitles) {
-                const titleWords = title.split(' ');
-                const guessWords = guess.split(' ');
-                // Если большая часть слов совпадает
-                let matchCount = 0;
-                for (const tw of titleWords) {
-                    if (tw.length < 3) continue;
-                    for (const gw of guessWords) {
-                        if (gw.length < 3) continue;
-                        if (tw === gw || tw.includes(gw) || gw.includes(tw)) {
-                            matchCount++;
-                            break;
-                        }
-                    }
-                }
-                if (matchCount >= Math.min(2, titleWords.length)) return true;
+                // Точное совпадение
+                if (guessLower === nameLower) return true;
+
+                // Одно содержит другое (если длина > 3)
+                if (guessLower.length >= 3 && nameLower.includes(guessLower)) return true;
+                if (nameLower.length >= 3 && guessLower.includes(nameLower)) return true;
             }
 
             return false;
         }
 
+        // ---------- ОБРАБОТЧИК УГАДЫВАНИЯ ----------
         function handleGuess() {
             if (loading || !film) {
                 feedback.textContent = '❌ Сначала загрузите фильм';
@@ -1048,15 +1103,14 @@
                 return;
             }
 
-            // Закрываем список подсказок
             suggestList.classList.remove('show');
 
             const isCorrect = checkGuess(guessText);
 
-            addAttempt();
-
             // Получаем отображаемое название
             const displayName = film.nameRu || film.nameEn || omdb?.Title || film.originalTitle || 'Без названия';
+
+            addAttempt();
 
             if (isCorrect) {
                 guessed = true;
@@ -1086,7 +1140,6 @@
             }
         }
 
-        // Привязываем обработчики
         guessBtn.onclick = handleGuess;
 
         guessInput.addEventListener('keydown', function(e) {
@@ -1097,7 +1150,7 @@
         });
 
         // ============================================================
-        //  ПОДБОР — ПОЛНОСТЬЮ ПЕРЕПИСАН
+        //  ПОДБОР ВАРИАНТОВ — ИСПРАВЛЕНО
         // ============================================================
         suggestBtn.onclick = async function() {
             const query = guessInput.value.trim();
@@ -1129,16 +1182,17 @@
                         <span class="title">${item.Title}</span>
                         <span class="year">${item.Year || '—'}</span>
                     `;
-                    // Прямой вызов проверки без handleGuess
                     div.onclick = function() {
                         const selectedTitle = this.querySelector('.title').textContent;
                         guessInput.value = selectedTitle;
                         suggestList.classList.remove('show');
+
                         // Проверяем выбранный вариант
                         const isCorrect = checkGuess(selectedTitle);
-                        addAttempt();
 
                         const displayName = film.nameRu || film.nameEn || omdb?.Title || film.originalTitle || 'Без названия';
+
+                        addAttempt();
 
                         if (isCorrect) {
                             guessed = true;
@@ -1204,7 +1258,7 @@
         };
 
         // ============================================================
-        //  МУЛЬТИПЛЕЕР — PEERJS (НЕ ТРОГАЕМ, РАБОТАЕТ)
+        //  МУЛЬТИПЛЕЕР — НЕ ТРОГАЕМ
         // ============================================================
 
         function syncGame() {
@@ -1679,7 +1733,6 @@
         console.log('🎬 Угадай фильм — мультиплеер через PeerJS');
         console.log('📌 Код комнаты — 4 цифры');
         console.log('👤 Ваш ID:', myId);
-        console.log('💡 Если не подключается — попробуйте другой код');
     </script>
 </body>
 </html>
