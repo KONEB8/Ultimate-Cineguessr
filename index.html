@@ -36,11 +36,6 @@
             border: 1px solid #e4e6eb;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
-        .card h3 {
-            font-size: 14px;
-            margin-bottom: 10px;
-            color: #333;
-        }
         .input-group {
             display: flex;
             flex-wrap: wrap;
@@ -410,42 +405,72 @@
         }
 
         /* Режим Подстава */
-        .setup-mode .game-area {
-            display: none;
-        }
-        .setup-mode .setup-area {
-            display: block;
-        }
-        .setup-area {
-            display: none;
-        }
-        .setup-grid {
+        .duel-frames {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
             margin: 10px 0;
         }
-        .setup-player {
+        .duel-frames .frame-group {
             background: #f8f9fa;
             border-radius: 8px;
-            padding: 12px;
-            border: 2px solid #e4e6eb;
+            padding: 8px;
+            border: 1px solid #e4e6eb;
         }
-        .setup-player.active {
-            border-color: #2ecc71;
-            background: #f0fff4;
-        }
-        .setup-player .player-name {
-            font-weight: 700;
-            font-size: 16px;
-            margin-bottom: 8px;
-        }
-        .setup-player .status {
+        .duel-frames .frame-group .group-title {
+            font-weight: 600;
             font-size: 13px;
-            color: #888;
+            margin-bottom: 6px;
+            text-align: center;
         }
-        .setup-player .status.ready {
-            color: #2ecc71;
+        .duel-frames .frame-group .mini-frames {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+        .duel-frames .frame-group .mini-frames img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .duel-frames .frame-group .mini-frames .no-image {
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #e9ecef;
+            border-radius: 4px;
+            color: #999;
+            font-size: 12px;
+        }
+        .guess-input-duel {
+            display: flex;
+            gap: 6px;
+            margin: 6px 0;
+        }
+        .guess-input-duel input {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid #d0d4dc;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .guess-input-duel button {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 6px;
+            background: #2ecc71;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .guess-input-duel button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .guess-input-duel button.hint-btn {
+            background: #f39c12;
         }
         .timer-bar {
             background: #e9ecef;
@@ -517,73 +542,6 @@
             color: #e74c3c;
             margin-top: 4px;
         }
-        .duel-frames {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin: 10px 0;
-        }
-        .duel-frames .frame-group {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 8px;
-            border: 1px solid #e4e6eb;
-        }
-        .duel-frames .frame-group .group-title {
-            font-weight: 600;
-            font-size: 13px;
-            margin-bottom: 6px;
-            text-align: center;
-        }
-        .duel-frames .frame-group .mini-frames {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-        }
-        .duel-frames .frame-group .mini-frames img {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 4px;
-        }
-        .duel-frames .frame-group .mini-frames .no-image {
-            height: 120px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #e9ecef;
-            border-radius: 4px;
-            color: #999;
-            font-size: 12px;
-        }
-        .guess-input-duel {
-            display: flex;
-            gap: 6px;
-            margin: 6px 0;
-        }
-        .guess-input-duel input {
-            flex: 1;
-            padding: 6px 10px;
-            border: 1px solid #d0d4dc;
-            border-radius: 6px;
-            font-size: 13px;
-        }
-        .guess-input-duel button {
-            padding: 6px 14px;
-            border: none;
-            border-radius: 6px;
-            background: #2ecc71;
-            color: #fff;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .guess-input-duel button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .guess-input-duel button.hint-btn {
-            background: #f39c12;
-        }
         .game-over {
             text-align: center;
             padding: 20px;
@@ -618,8 +576,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 1000;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
             justify-content: center;
             align-items: center;
             animation: fadeIn 0.3s ease;
@@ -633,55 +591,71 @@
         }
         .modal-content {
             background: #fff;
-            border-radius: 16px;
-            padding: 40px 32px 32px;
-            max-width: 420px;
-            width: 90%;
+            border-radius: 20px;
+            padding: 40px 36px 32px;
+            max-width: 440px;
+            width: 92%;
             text-align: center;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            animation: slideUp 0.3s ease;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+            animation: slideUp 0.35s ease;
         }
         @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+            from { transform: translateY(30px) scale(0.95); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
         }
         .modal-content .modal-icon {
-            font-size: 48px;
-            margin-bottom: 12px;
+            font-size: 52px;
+            margin-bottom: 10px;
         }
         .modal-content h2 {
-            font-size: 20px;
+            font-size: 22px;
             color: #1a1a2e;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
-        .modal-content p {
+        .modal-content .modal-sub {
             font-size: 14px;
             color: #888;
             margin-bottom: 20px;
         }
         .modal-content input {
             width: 100%;
-            padding: 12px 16px;
+            padding: 14px 18px;
             border: 2px solid #e4e6eb;
-            border-radius: 8px;
-            font-size: 16px;
-            margin-bottom: 16px;
+            border-radius: 10px;
+            font-size: 17px;
             transition: border-color 0.2s;
+            background: #fafbfc;
         }
         .modal-content input:focus {
             outline: none;
             border-color: #ff6b35;
+            background: #fff;
+        }
+        .modal-content .modal-status {
+            font-size: 14px;
+            padding: 10px 0 6px;
+            min-height: 36px;
+        }
+        .modal-content .modal-status.loading {
+            color: #888;
+        }
+        .modal-content .modal-status.error {
+            color: #e74c3c;
+        }
+        .modal-content .modal-status.success {
+            color: #2ecc71;
         }
         .modal-content .modal-buttons {
             display: flex;
             gap: 10px;
+            margin-top: 6px;
         }
         .modal-content .modal-buttons button {
             flex: 1;
-            padding: 12px;
+            padding: 13px;
             border: none;
-            border-radius: 8px;
-            font-size: 15px;
+            border-radius: 10px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: background 0.2s;
@@ -693,27 +667,16 @@
         .modal-content .modal-buttons .btn-primary:hover {
             background: #e55a2b;
         }
+        .modal-content .modal-buttons .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
         .modal-content .modal-buttons .btn-secondary {
             background: #e4e6eb;
             color: #333;
         }
         .modal-content .modal-buttons .btn-secondary:hover {
             background: #d0d4dc;
-        }
-        .modal-content .modal-loading {
-            color: #888;
-            font-size: 14px;
-            padding: 8px;
-        }
-        .modal-content .modal-error {
-            color: #e74c3c;
-            font-size: 14px;
-            margin-bottom: 12px;
-        }
-        .modal-content .modal-success {
-            color: #2ecc71;
-            font-size: 14px;
-            margin-bottom: 12px;
         }
     </style>
 </head>
@@ -815,21 +778,21 @@
 
                     <div class="duel-frames" id="duelFrames">
                         <div class="frame-group">
-                            <div class="group-title" id="myFilmTitle">Ваш фильм</div>
+                            <div class="group-title" id="myFilmTitle">Ваш фильм (для оппонента)</div>
                             <div class="mini-frames" id="myDuelFrames">
-                                <div class="no-image">Ожидание...</div>
+                                <div class="no-image">Ожидание выбора...</div>
                             </div>
                             <div class="guess-input-duel">
-                                <input type="text" id="myGuessInput" placeholder="Угадайте фильм оппонента...">
+                                <input type="text" id="myGuessInput" placeholder="Угадайте фильм оппонента..." disabled>
                                 <button id="myGuessBtn" disabled>Угадать</button>
                                 <button id="myHintBtn" class="hint-btn" disabled>💡 Подсказка</button>
                             </div>
                             <div id="myGuessStatus" style="font-size:12px;color:#888;margin-top:4px;"></div>
                         </div>
                         <div class="frame-group">
-                            <div class="group-title" id="oppFilmTitle">Фильм оппонента</div>
+                            <div class="group-title" id="oppFilmTitle">Фильм оппонента (для вас)</div>
                             <div class="mini-frames" id="oppDuelFrames">
-                                <div class="no-image">Ожидание...</div>
+                                <div class="no-image">Ожидание выбора...</div>
                             </div>
                             <div class="guess-input-duel">
                                 <input type="text" id="oppGuessInput" placeholder="Угадайте мой фильм..." disabled>
@@ -882,10 +845,10 @@
     <div class="modal-overlay" id="filmModal">
         <div class="modal-content">
             <div class="modal-icon">🎬</div>
-            <h2>Загадайте фильм</h2>
-            <p>Введите название фильма, который вы хотите загадать оппоненту</p>
-            <input type="text" id="modalFilmInput" placeholder="Например: Интерстеллар">
-            <div id="modalStatus" class="modal-loading">Введите название и нажмите «Выбрать»</div>
+            <h2 id="modalTitle">Загадайте фильм</h2>
+            <div class="modal-sub" id="modalSub">Введите название фильма, который вы хотите загадать оппоненту</div>
+            <input type="text" id="modalFilmInput" placeholder="Например: Интерстеллар" autofocus>
+            <div class="modal-status loading" id="modalStatus">Введите название и нажмите «Выбрать»</div>
             <div class="modal-buttons">
                 <button class="btn-secondary" id="modalCancelBtn">Отмена</button>
                 <button class="btn-primary" id="modalConfirmBtn">Выбрать</button>
@@ -947,6 +910,8 @@
 
         // Modal elements
         const filmModal = $('filmModal');
+        const modalTitle = $('modalTitle');
+        const modalSub = $('modalSub');
         const modalFilmInput = $('modalFilmInput');
         const modalStatus = $('modalStatus');
         const modalConfirmBtn = $('modalConfirmBtn');
@@ -1019,13 +984,13 @@
             timer: 120,
             timerInterval: null,
             roundActive: false,
-            myReady: false,
-            oppReady: false,
             gameOver: false,
             myChosen: false,
             oppChosen: false,
             myFilmName: '',
-            oppFilmName: ''
+            oppFilmName: '',
+            waitingForOpponent: false,
+            modalOpen: false
         };
 
         // PeerJS
@@ -1418,17 +1383,22 @@
         //  POP-UP МОДАЛЬНОЕ ОКНО
         // ============================================================
 
-        function showModal() {
+        function showModal(title, sub) {
+            if (duelState.modalOpen) return;
+            duelState.modalOpen = true;
+            if (title) modalTitle.textContent = title;
+            if (sub) modalSub.textContent = sub;
             filmModal.classList.add('active');
             modalFilmInput.value = '';
-            modalStatus.className = 'modal-loading';
+            modalStatus.className = 'modal-status loading';
             modalStatus.textContent = 'Введите название и нажмите «Выбрать»';
-            modalFilmInput.focus();
             modalConfirmBtn.disabled = false;
             modalFilmInput.disabled = false;
+            setTimeout(() => modalFilmInput.focus(), 100);
         }
 
         function hideModal() {
+            duelState.modalOpen = false;
             filmModal.classList.remove('active');
         }
 
@@ -1437,20 +1407,20 @@
         modalConfirmBtn.onclick = async function() {
             const title = modalFilmInput.value.trim();
             if (!title) {
-                modalStatus.className = 'modal-error';
+                modalStatus.className = 'modal-status error';
                 modalStatus.textContent = '❌ Введите название фильма';
                 return;
             }
 
             modalConfirmBtn.disabled = true;
             modalFilmInput.disabled = true;
-            modalStatus.className = 'modal-loading';
+            modalStatus.className = 'modal-status loading';
             modalStatus.textContent = '⏳ Поиск фильма...';
 
             try {
                 const searchResult = await kpSearch(title);
                 if (!searchResult || !searchResult.filmId) {
-                    modalStatus.className = 'modal-error';
+                    modalStatus.className = 'modal-status error';
                     modalStatus.textContent = '❌ Фильм не найден. Попробуйте другое название.';
                     modalConfirmBtn.disabled = false;
                     modalFilmInput.disabled = false;
@@ -1459,7 +1429,7 @@
 
                 const filmData = await kpFilm(searchResult.filmId);
                 if (!filmData) {
-                    modalStatus.className = 'modal-error';
+                    modalStatus.className = 'modal-status error';
                     modalStatus.textContent = '❌ Ошибка загрузки данных фильма';
                     modalConfirmBtn.disabled = false;
                     modalFilmInput.disabled = false;
@@ -1468,7 +1438,7 @@
 
                 const framesArr = await kpFrames(searchResult.filmId);
                 if (!framesArr || framesArr.length < 1) {
-                    modalStatus.className = 'modal-error';
+                    modalStatus.className = 'modal-status error';
                     modalStatus.textContent = '❌ У фильма нет кадров. Выберите другой.';
                     modalConfirmBtn.disabled = false;
                     modalFilmInput.disabled = false;
@@ -1482,18 +1452,14 @@
                 duelState.myFilmName = filmData.nameRu || filmData.nameEn || 'Без названия';
                 duelState.myChosen = true;
 
-                modalStatus.className = 'modal-success';
+                modalStatus.className = 'modal-status success';
                 modalStatus.textContent = '✅ Фильм выбран! "' + duelState.myFilmName + '"';
 
-                // Закрываем модалку через секунду
                 setTimeout(() => {
                     hideModal();
-                    // Обновляем интерфейс
                     renderDuelFrames();
                     setupFeedback.textContent = '✅ Фильм загадан! Ждите оппонента.';
                     setupFeedback.className = 'feedback success';
-                    myGuessInput.disabled = true;
-                    myGuessBtn.disabled = true;
                     myGuessStatus.textContent = '✅ Фильм выбран: ' + duelState.myFilmName;
                     myGuessStatus.style.color = '#2ecc71';
 
@@ -1506,22 +1472,20 @@
 
                     addChat('🎯 ' + myName + ' загадал фильм!', 'system');
                     checkBothChosen();
-                }, 1000);
+                }, 800);
 
             } catch (e) {
-                modalStatus.className = 'modal-error';
+                modalStatus.className = 'modal-status error';
                 modalStatus.textContent = '❌ Ошибка: ' + e.message;
                 modalConfirmBtn.disabled = false;
                 modalFilmInput.disabled = false;
             }
         };
 
-        // Закрытие по клику вне модалки
         filmModal.addEventListener('click', function(e) {
             if (e.target === this) hideModal();
         });
 
-        // Enter в поле ввода модалки
         modalFilmInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') modalConfirmBtn.click();
             if (e.key === 'Escape') hideModal();
@@ -1545,11 +1509,13 @@
                 normalMode.classList.add('hidden');
                 setupModeBtn.textContent = '❌ Выйти из Подставы';
                 setupModeBtn.className = 'red';
-                setupFeedback.textContent = '🎯 Режим Подстава активирован! Загадайте фильм.';
-                setupFeedback.className = 'feedback info';
                 addChat('🎯 Хост включил режим ПОДСТАВА!', 'system');
                 sendToPeer('duel_mode', { active: true });
                 startDuelSetup();
+                // Показываем модалку хосту
+                setTimeout(() => {
+                    showModal('🎬 Загадайте фильм', 'Введите название фильма, который вы хотите загадать оппоненту');
+                }, 500);
             } else {
                 setupMode.classList.add('hidden');
                 normalMode.classList.remove('hidden');
@@ -1562,6 +1528,7 @@
                 duelFrames.style.display = 'grid';
                 sendToPeer('duel_mode', { active: false });
                 addChat('❌ Хост вышел из режима Подстава', 'system');
+                hideModal();
             }
         }
 
@@ -1579,18 +1546,17 @@
             duelState.oppAttempts = 0;
             duelState.gameOver = false;
             duelState.roundActive = false;
-            duelState.myReady = false;
-            duelState.oppReady = false;
             duelState.myChosen = false;
             duelState.oppChosen = false;
+            duelState.modalOpen = false;
             gameOverArea.classList.add('hidden');
             duelFrames.style.display = 'grid';
             updateDuelUI();
-            setupFeedback.textContent = '🎯 Нажмите кнопку «Загадать фильм»';
+            setupFeedback.textContent = '🎯 Выберите фильм в появившемся окне';
             setupFeedback.className = 'feedback info';
             myGuessInput.placeholder = 'Угадайте фильм оппонента...';
-            myGuessBtn.textContent = 'Загадать фильм';
-            myGuessBtn.disabled = false;
+            myGuessBtn.textContent = 'Угадать';
+            myGuessBtn.disabled = true;
             myHintBtn.disabled = true;
             oppGuessInput.disabled = true;
             oppGuessBtn.disabled = true;
@@ -1608,9 +1574,6 @@
             oppScoreLabel.textContent = 'Противник';
             finalMyName.textContent = myName;
             finalOppName.textContent = 'Противник';
-
-            // Кнопка открывает модалку
-            myGuessBtn.onclick = showModal;
         }
 
         function handleDuelChosen(data) {
@@ -1634,24 +1597,20 @@
                 setupFeedback.className = 'feedback success';
                 myGuessInput.disabled = false;
                 myGuessBtn.disabled = false;
-                myGuessBtn.textContent = 'Угадать';
                 myGuessBtn.onclick = handleDuelGuess;
                 oppGuessInput.disabled = true;
                 oppGuessBtn.disabled = true;
                 oppHintBtn.disabled = true;
                 myHintBtn.disabled = false;
 
-                // Обновляем заголовки
                 myFilmTitle.textContent = 'Фильм оппонента (угадайте)';
                 oppFilmTitle.textContent = 'Мой фильм (вам угадывают)';
 
-                // Запускаем раунд
                 startDuelRound();
             }
         }
 
         function renderDuelFrames() {
-            // Мои кадры (фильм, который я загадал)
             if (duelState.myFrames && duelState.myFrames.length) {
                 myDuelFrames.innerHTML = duelState.myFrames.slice(0, 3).map(u =>
                     '<img src="' + u + '" onerror="this.style.display=\'none\'">'
@@ -1660,7 +1619,6 @@
                 myDuelFrames.innerHTML = '<div class="no-image">Нет кадров</div>';
             }
 
-            // Кадры оппонента (фильм, который загадал оппонент)
             if (duelState.oppFrames && duelState.oppFrames.length) {
                 oppDuelFrames.innerHTML = duelState.oppFrames.slice(0, 3).map(u =>
                     '<img src="' + u + '" onerror="this.style.display=\'none\'">'
@@ -1697,15 +1655,12 @@
             setupFeedback.textContent = '⏱️ Угадайте фильм оппонента! 120 секунд.';
             setupFeedback.className = 'feedback warning';
 
-            // Запускаем таймер
             startDuelTimer();
 
-            // Отправляем оппоненту начало раунда
             sendToPeer('duel_round_start', { round: duelState.round });
 
             addChat('🎯 Раунд ' + duelState.round + ' начался!', 'system');
 
-            // Показываем кадры для угадывания
             renderDuelFrames();
         }
 
@@ -1751,7 +1706,6 @@
             oppScoreLabel.textContent = 'Противник';
         }
 
-        // Угадывание в режиме Подстава (я угадываю фильм оппонента)
         async function handleDuelGuess() {
             if (!duelMode || !duelState.roundActive || duelState.gameOver) return;
             if (duelState.myGuessed) {
@@ -1769,7 +1723,6 @@
 
             duelState.myAttempts++;
 
-            // Проверяем, угадал ли игрок
             const isCorrect = checkDuelGuess(guess, duelState.oppFilm);
             const oppName = duelState.oppFilmName || 'Без названия';
 
@@ -1794,7 +1747,6 @@
 
                 addChat('🎯 <strong>' + myName + '</strong> угадал фильм!', 'system');
 
-                // Проверяем, закончился ли раунд
                 if (duelState.oppGuessed) {
                     endDuelRound();
                 } else {
@@ -1927,10 +1879,8 @@
                         startDuelSetup();
                         setupFeedback.textContent = '🎯 Раунд ' + (duelState.round + 1) + '. Загадайте новый фильм.';
                         setupFeedback.className = 'feedback info';
-                        myGuessInput.disabled = false;
-                        myGuessBtn.disabled = false;
-                        myGuessBtn.textContent = 'Загадать фильм';
-                        myGuessBtn.onclick = showModal;
+                        myGuessInput.disabled = true;
+                        myGuessBtn.disabled = true;
                         myHintBtn.disabled = true;
                         oppGuessInput.disabled = true;
                         oppGuessBtn.disabled = true;
@@ -1939,6 +1889,10 @@
                         oppGuessStatus.textContent = '';
                         duelFrames.style.display = 'grid';
                         gameOverArea.classList.add('hidden');
+                        // Показываем модалку для нового раунда
+                        setTimeout(() => {
+                            showModal('🎬 Раунд ' + (duelState.round + 1), 'Загадайте новый фильм для оппонента');
+                        }, 500);
                     }
                 }, 3000);
             }
@@ -1982,7 +1936,6 @@
             });
         }
 
-        // Подсказка в режиме Подстава
         function useDuelHint() {
             if (!duelMode || !duelState.roundActive || duelState.gameOver) return;
             if (duelState.myHintUsed) {
@@ -2075,16 +2028,17 @@
                             startDuelSetup();
                             setupFeedback.textContent = '🎯 Режим Подстава активирован! Загадайте фильм.';
                             setupFeedback.className = 'feedback info';
-                            myGuessInput.disabled = false;
-                            myGuessBtn.disabled = false;
-                            myGuessBtn.textContent = 'Загадать фильм';
-                            myGuessBtn.onclick = showModal;
+                            // Показываем модалку гостю
+                            setTimeout(() => {
+                                showModal('🎬 Загадайте фильм', 'Введите название фильма, который вы хотите загадать оппоненту');
+                            }, 500);
                         }
                     } else {
                         duelMode = false;
                         setupMode.classList.add('hidden');
                         normalMode.classList.remove('hidden');
                         addChat('❌ Хост вышел из режима Подстава', 'system');
+                        hideModal();
                     }
                     break;
 
@@ -2111,7 +2065,6 @@
 
                         myGuessInput.disabled = false;
                         myGuessBtn.disabled = false;
-                        myGuessBtn.textContent = 'Угадать';
                         myGuessBtn.onclick = handleDuelGuess;
                         myHintBtn.disabled = false;
                         myGuessInput.value = '';
@@ -2127,10 +2080,6 @@
                         setupFeedback.className = 'feedback warning';
                         renderDuelFrames();
                         addChat('🎯 Раунд ' + duelState.round + ' начался!', 'system');
-
-                        oppGuessInput.disabled = true;
-                        oppGuessBtn.disabled = true;
-                        oppHintBtn.disabled = true;
                     }
                     break;
 
@@ -2240,10 +2189,8 @@
                                     startDuelSetup();
                                     setupFeedback.textContent = '🎯 Раунд ' + (duelState.round + 1) + '. Загадайте новый фильм.';
                                     setupFeedback.className = 'feedback info';
-                                    myGuessInput.disabled = false;
-                                    myGuessBtn.disabled = false;
-                                    myGuessBtn.textContent = 'Загадать фильм';
-                                    myGuessBtn.onclick = showModal;
+                                    myGuessInput.disabled = true;
+                                    myGuessBtn.disabled = true;
                                     myHintBtn.disabled = true;
                                     oppGuessInput.disabled = true;
                                     oppGuessBtn.disabled = true;
@@ -2252,6 +2199,9 @@
                                     oppGuessStatus.textContent = '';
                                     duelFrames.style.display = 'grid';
                                     gameOverArea.classList.add('hidden');
+                                    setTimeout(() => {
+                                        showModal('🎬 Раунд ' + (duelState.round + 1), 'Загадайте новый фильм для оппонента');
+                                    }, 500);
                                 }
                             }, 3000);
                         }
@@ -2554,6 +2504,7 @@
                             setupModeBtn.className = 'purple';
                             stopDuelTimer();
                             duelState.gameOver = false;
+                            hideModal();
                         }
                     }
                     break;
@@ -2751,6 +2702,7 @@
                 stopDuelTimer();
                 duelState.gameOver = false;
                 duelState.roundActive = false;
+                hideModal();
             }
         }
 
@@ -2795,6 +2747,9 @@
             setupFeedback.textContent = '🎯 Новая игра! Загадайте фильм.';
             setupFeedback.className = 'feedback info';
             sendToPeer('duel_mode', { active: true });
+            setTimeout(() => {
+                showModal('🎬 Новая игра', 'Загадайте новый фильм для оппонента');
+            }, 500);
         };
 
         console.log('🎬 Угадай фильм — с режимом ПОДСТАВА и POP-UP');
