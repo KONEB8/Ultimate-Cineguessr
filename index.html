@@ -914,6 +914,10 @@
                                     id = s.filmId;
                                     movie = await kpFilm(id);
                                     omdbData = m;
+                                    // Сохраняем оригинальное название для подбора
+                                    if (omdbData && omdbData.Title) {
+                                        movie.originalTitle = omdbData.Title;
+                                    }
                                     found = true;
                                 }
                             }
@@ -929,9 +933,10 @@
                 film = movie;
                 filmId = id;
                 omdb = omdbData;
+                // Сохраняем оригинальное название для подбора
                 if (omdbData && omdbData.Title) {
-    film.originalTitle = omdbData.Title;
-}
+                    film.originalTitle = omdbData.Title;
+                }
                 showFilm(movie, omdbData);
                 const fr = await kpFrames(id);
                 if (fr.length) { showFrames(fr);
@@ -953,70 +958,73 @@
         newBtn.onclick = () => loadFilm('random');
         easyBtn.onclick = () => loadFilm('easy');
 
-        // ---------- УГАДЫВАНИЕ ----------
-async function handleGuess() {
-    if (loading || !film) {
-        feedback.textContent = '❌ Сначала загрузите фильм';
-        feedback.className = 'feedback error';
-        return;
-    }
-    if (guessed) {
-        feedback.textContent = '✅ Вы уже угадали!';
-        feedback.className = 'feedback success';
-        return;
-    }
-    const g = guessInput.value.trim();
-    if (!g) {
-        feedback.textContent = '✏️ Введите название';
-        feedback.className = 'feedback error';
-        return;
-    }
-    suggestList.classList.remove('show');
+        // ---------- УГАДЫВАНИЕ (ИСПРАВЛЕНО) ----------
+        async function handleGuess() {
+            if (loading || !film) {
+                feedback.textContent = '❌ Сначала загрузите фильм';
+                feedback.className = 'feedback error';
+                return;
+            }
+            if (guessed) {
+                feedback.textContent = '✅ Вы уже угадали!';
+                feedback.className = 'feedback success';
+                return;
+            }
+            const g = guessInput.value.trim();
+            if (!g) {
+                feedback.textContent = '✏️ Введите название';
+                feedback.className = 'feedback error';
+                return;
+            }
+            suggestList.classList.remove('show');
 
-    // Получаем название фильма из нескольких источников
-    const nameRu = film.nameRu || '';
-    const nameEn = film.nameEn || '';
-    const altName = film.alternativeName || '';
-    const omdbTitle = omdb?.Title || '';
+            // Получаем все возможные названия
+            const nameRu = film.nameRu || '';
+            const nameEn = film.nameEn || '';
+            const altName = film.alternativeName || '';
+            const omdbTitle = omdb?.Title || '';
+            const originalTitle = film.originalTitle || '';
 
-    const gl = g.toLowerCase().trim();
-    const nl = nameRu.toLowerCase().trim();
-    const enl = nameEn.toLowerCase().trim();
-    const altl = altName.toLowerCase().trim();
-    const omdbl = omdbTitle.toLowerCase().trim();
+            const gl = g.toLowerCase().trim();
+            const nl = nameRu.toLowerCase().trim();
+            const enl = nameEn.toLowerCase().trim();
+            const altl = altName.toLowerCase().trim();
+            const omdbl = omdbTitle.toLowerCase().trim();
+            const origl = originalTitle.toLowerCase().trim();
 
-    // Проверяем все возможные варианты названий
-    const ok = gl === nl || gl === enl || gl === altl || gl === omdbl ||
-               nl.includes(gl) || gl.includes(nl) ||
-               (enl && enl.includes(gl)) ||
-               (altl && altl.includes(gl)) ||
-               (omdbl && omdbl.includes(gl));
+            // Проверяем все варианты
+            const ok = gl === nl || gl === enl || gl === altl || gl === omdbl || gl === origl ||
+                       nl.includes(gl) || gl.includes(nl) ||
+                       (enl && enl.includes(gl)) ||
+                       (altl && altl.includes(gl)) ||
+                       (omdbl && omdbl.includes(gl)) ||
+                       (origl && origl.includes(gl));
 
-    addAttempt();
+            addAttempt();
 
-    if (ok) {
-        guessed = true;
-        addWin();
-        const displayName = nameRu || nameEn || omdbTitle || 'Без названия';
-        revealTitle(displayName);
-        feedback.textContent = '🎉 Правильно! "' + displayName + '"!';
-        feedback.className = 'feedback success';
-        guessInput.disabled = true;
-        guessBtn.disabled = true;
-        if (isConnected) {
-            sendToPeer('guess', { name: myName, guess: g, win: true });
-            addChat('🎯 <strong>' + myName + '</strong> угадал!', 'system');
-        }
-        if (isConnected) syncGame();
-    } else {
-        addError();
-        feedback.textContent = '❌ Не угадал. Ошибок: ' + stats.e;
-        feedback.className = 'feedback error';
-        guessInput.value = '';
-        guessInput.focus();
-        if (isConnected) {
-            sendToPeer('guess', { name: myName, guess: g, win: false });
-            addChat('❌ <strong>' + myName + '</strong>: ' + g + ' — не угадал', '');
+            if (ok) {
+                guessed = true;
+                addWin();
+                const displayName = nameRu || nameEn || omdbTitle || originalTitle || 'Без названия';
+                revealTitle(displayName);
+                feedback.textContent = '🎉 Правильно! "' + displayName + '"!';
+                feedback.className = 'feedback success';
+                guessInput.disabled = true;
+                guessBtn.disabled = true;
+                if (isConnected) {
+                    sendToPeer('guess', { name: myName, guess: g, win: true });
+                    addChat('🎯 <strong>' + myName + '</strong> угадал!', 'system');
+                }
+                if (isConnected) syncGame();
+            } else {
+                addError();
+                feedback.textContent = '❌ Не угадал. Ошибок: ' + stats.e;
+                feedback.className = 'feedback error';
+                guessInput.value = '';
+                guessInput.focus();
+                if (isConnected) {
+                    sendToPeer('guess', { name: myName, guess: g, win: false });
+                    addChat('❌ <strong>' + myName + '</strong>: ' + g + ' — не угадал', '');
                 }
             }
         }
@@ -1025,7 +1033,7 @@ async function handleGuess() {
         guessInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault();
                 handleGuess(); } });
 
-        // ---------- ПОДБОР ----------
+        // ---------- ПОДБОР (ИСПРАВЛЕН) ----------
         suggestBtn.onclick = async function() {
             const q = guessInput.value.trim();
             if (!q) { feedback.textContent = '✏️ Введите слово';
@@ -1044,11 +1052,13 @@ async function handleGuess() {
                         '<span class="title">' + item.Title + '</span><span class="year">' + (item.Year || '—') +
                         '</span>';
                     d.onclick = function() {
-    const selectedTitle = this.querySelector('.title').textContent;
-    guessInput.value = selectedTitle;
-    suggestList.classList.remove('show');
-    // Небольшая задержка, чтобы DOM обновился
-    setTimeout(handleGuess, 50);
+                        const selectedTitle = this.querySelector('.title').textContent;
+                        guessInput.value = selectedTitle;
+                        suggestList.classList.remove('show');
+                        // Небольшая задержка для обновления DOM
+                        setTimeout(handleGuess, 50);
+                    };
+                    suggestList.appendChild(d);
                 });
                 feedback.textContent = '🔍 ' + res.length + ' вариантов. Выберите.';
                 feedback.className = 'feedback info';
@@ -1084,7 +1094,7 @@ async function handleGuess() {
         };
 
         // ============================================================
-        //  МУЛЬТИПЛЕЕР — PEERJS С ТАЙМАУТАМИ
+        //  МУЛЬТИПЛЕЕР — PEERJS (НЕ ТРОГАЕМ)
         // ============================================================
 
         function syncGame() {
@@ -1114,7 +1124,6 @@ async function handleGuess() {
                 peer = null;
             }
 
-            // Генерируем ID на основе кода комнаты
             const peerId = isHost ? room : undefined;
 
             peer = new Peer(peerId, {
@@ -1127,7 +1136,6 @@ async function handleGuess() {
                 }
             });
 
-            // Таймаут подключения
             if (connectTimeout) clearTimeout(connectTimeout);
             connectTimeout = setTimeout(() => {
                 if (!isConnected && isConnecting) {
@@ -1227,7 +1235,6 @@ async function handleGuess() {
                 addChat('👋 Вы вошли как <strong>' + myName + '</strong>', 'system');
             } else {
                 addChat('👤 Игрок подключился!', 'system');
-                // Отправляем состояние хоста
                 setTimeout(() => {
                     players[myId] = { name: myName, guessed: false };
                     updateOnline();
@@ -1416,7 +1423,6 @@ async function handleGuess() {
             feedback.textContent = '⏳ Подключение к комнате...';
             feedback.className = 'feedback loading';
 
-            // Инициализируем Peer и подключаемся к хосту
             if (peer) {
                 try { peer.destroy(); } catch (e) {}
                 peer = null;
@@ -1432,7 +1438,6 @@ async function handleGuess() {
                 }
             });
 
-            // Таймаут
             if (connectTimeout) clearTimeout(connectTimeout);
             connectTimeout = setTimeout(() => {
                 if (!isConnected && isConnecting) {
@@ -1454,7 +1459,6 @@ async function handleGuess() {
                 isConnecting = false;
                 if (connectTimeout) clearTimeout(connectTimeout);
 
-                // Подключаемся к хосту по коду комнаты
                 const c = peer.connect(code);
                 if (c) {
                     conn = c;
