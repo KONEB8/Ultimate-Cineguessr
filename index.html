@@ -929,6 +929,9 @@
                 film = movie;
                 filmId = id;
                 omdb = omdbData;
+                if (omdbData && omdbData.Title) {
+    film.originalTitle = omdbData.Title;
+}
                 showFilm(movie, omdbData);
                 const fr = await kpFrames(id);
                 if (fr.length) { showFrames(fr);
@@ -951,48 +954,71 @@
         easyBtn.onclick = () => loadFilm('easy');
 
         // ---------- УГАДЫВАНИЕ ----------
-        async function handleGuess() {
-            if (loading || !film) { feedback.textContent = '❌ Сначала загрузите фильм';
-                feedback.className = 'feedback error'; return; }
-            if (guessed) { feedback.textContent = '✅ Вы уже угадали!';
-                feedback.className = 'feedback success'; return; }
-            const g = guessInput.value.trim();
-            if (!g) { feedback.textContent = '✏️ Введите название';
-                feedback.className = 'feedback error'; return; }
-            suggestList.classList.remove('show');
+async function handleGuess() {
+    if (loading || !film) {
+        feedback.textContent = '❌ Сначала загрузите фильм';
+        feedback.className = 'feedback error';
+        return;
+    }
+    if (guessed) {
+        feedback.textContent = '✅ Вы уже угадали!';
+        feedback.className = 'feedback success';
+        return;
+    }
+    const g = guessInput.value.trim();
+    if (!g) {
+        feedback.textContent = '✏️ Введите название';
+        feedback.className = 'feedback error';
+        return;
+    }
+    suggestList.classList.remove('show');
 
-            const name = film.nameRu || film.nameEn || omdb?.Title || '';
-            const en = film.nameEn || omdb?.Title || '';
-            const gl = g.toLowerCase().trim(),
-                nl = name.toLowerCase().trim(),
-                enl = en.toLowerCase().trim();
-            const ok = gl === nl || gl === enl || nl.includes(gl) || gl.includes(nl) || (enl && enl.includes(gl));
+    // Получаем название фильма из нескольких источников
+    const nameRu = film.nameRu || '';
+    const nameEn = film.nameEn || '';
+    const altName = film.alternativeName || '';
+    const omdbTitle = omdb?.Title || '';
 
-            addAttempt();
-            if (ok) {
-                guessed = true;
-                addWin();
-                revealTitle(name);
-                feedback.textContent = '🎉 Правильно! "' + name + '"!';
-                feedback.className = 'feedback success';
-                guessInput.disabled = true;
-                guessBtn.disabled = true;
-                if (isConnected) {
-                    sendToPeer('guess', { name: myName, guess: g, win: true });
-                    addChat('🎯 <strong>' + myName + '</strong> угадал!', 'system');
-                }
-            } else {
-                addError();
-                feedback.textContent = '❌ Не угадал. Ошибок: ' + stats.e;
-                feedback.className = 'feedback error';
-                guessInput.value = '';
-                guessInput.focus();
-                if (isConnected) {
-                    sendToPeer('guess', { name: myName, guess: g, win: false });
-                    addChat('❌ <strong>' + myName + '</strong>: ' + g + ' — не угадал', '');
+    const gl = g.toLowerCase().trim();
+    const nl = nameRu.toLowerCase().trim();
+    const enl = nameEn.toLowerCase().trim();
+    const altl = altName.toLowerCase().trim();
+    const omdbl = omdbTitle.toLowerCase().trim();
+
+    // Проверяем все возможные варианты названий
+    const ok = gl === nl || gl === enl || gl === altl || gl === omdbl ||
+               nl.includes(gl) || gl.includes(nl) ||
+               (enl && enl.includes(gl)) ||
+               (altl && altl.includes(gl)) ||
+               (omdbl && omdbl.includes(gl));
+
+    addAttempt();
+
+    if (ok) {
+        guessed = true;
+        addWin();
+        const displayName = nameRu || nameEn || omdbTitle || 'Без названия';
+        revealTitle(displayName);
+        feedback.textContent = '🎉 Правильно! "' + displayName + '"!';
+        feedback.className = 'feedback success';
+        guessInput.disabled = true;
+        guessBtn.disabled = true;
+        if (isConnected) {
+            sendToPeer('guess', { name: myName, guess: g, win: true });
+            addChat('🎯 <strong>' + myName + '</strong> угадал!', 'system');
+        }
+        if (isConnected) syncGame();
+    } else {
+        addError();
+        feedback.textContent = '❌ Не угадал. Ошибок: ' + stats.e;
+        feedback.className = 'feedback error';
+        guessInput.value = '';
+        guessInput.focus();
+        if (isConnected) {
+            sendToPeer('guess', { name: myName, guess: g, win: false });
+            addChat('❌ <strong>' + myName + '</strong>: ' + g + ' — не угадал', '');
                 }
             }
-            if (isConnected) syncGame();
         }
 
         guessBtn.onclick = handleGuess;
@@ -1017,10 +1043,12 @@
                     d.innerHTML =
                         '<span class="title">' + item.Title + '</span><span class="year">' + (item.Year || '—') +
                         '</span>';
-                    d.onclick = () => { guessInput.value = item.Title;
-                        suggestList.classList.remove('show');
-                        handleGuess(); };
-                    suggestList.appendChild(d);
+                    d.onclick = function() {
+    const selectedTitle = this.querySelector('.title').textContent;
+    guessInput.value = selectedTitle;
+    suggestList.classList.remove('show');
+    // Небольшая задержка, чтобы DOM обновился
+    setTimeout(handleGuess, 50);
                 });
                 feedback.textContent = '🔍 ' + res.length + ' вариантов. Выберите.';
                 feedback.className = 'feedback info';
