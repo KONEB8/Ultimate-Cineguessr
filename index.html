@@ -463,7 +463,7 @@
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
         <h1 style="font-size:24px;">🎬 Угадай фильм</h1>
         <div class="inline-flex">
-            <span id="roomDisplay" style="font-size:13px;color:#888;">Код: <span class="room-code" id="roomCodeDisplay">----</span></span>
+            <span id="roomDisplay" style="font-size:13px;color:#888;display:none;">Код: <span class="room-code" id="roomCodeDisplay">----</span></span>
             <span id="playerCount" style="font-size:13px;color:#888;">👤 1</span>
             <span id="statusDot" class="status-dot offline"></span>
         </div>
@@ -566,7 +566,7 @@
     </script>
     <script>
         // ============================================================
-        //  ПРОСТАЯ РАБОЧАЯ ВЕРСИЯ С PEERJS
+        //  УПРОЩЁННАЯ ВЕРСИЯ С ТАЙМАУТАМИ
         // ============================================================
 
         // ---------- КОНФИГ ----------
@@ -575,8 +575,7 @@
         const WORDS = ['интерстеллар', 'матрица', 'титаник', 'аватар', 'гладиатор',
             'форрест гамп', 'зеленая миля', 'боец', 'джокер', 'паразиты',
             'побег из шоушенка', 'крестный отец', 'темный рыцарь',
-            'криминальное чтиво', 'список шиндлера', 'властелин колец',
-            'гарри поттер', 'пираты карибского моря', 'терминатор'
+            'криминальное чтиво', 'список шиндлера', 'властелин колец'
         ];
 
         // ---------- DOM ----------
@@ -592,6 +591,7 @@
             roomInfo = $('roomInfo'),
             connectStatus = $('connectStatus'),
             roomCodeDisplay = $('roomCodeDisplay'),
+            roomDisplay = $('roomDisplay'),
             playerCount = $('playerCount'),
             statusDot = $('statusDot');
         const frames = $('frames'),
@@ -641,7 +641,8 @@
         let peer = null;
         let conn = null;
         let players = {};
-        let gameData = {};
+        let connectTimeout = null;
+        let isConnecting = false;
 
         // ---------- СТАТИСТИКА ----------
         function updateStats() {
@@ -882,7 +883,7 @@
                         if (usedWords.length >= WORDS.length) usedWords = [];
                         const avail = WORDS.filter(w => !usedWords.includes(w));
                         const w = avail.length ? avail[Math.floor(Math.random() * avail.length)] : WORDS[Math.floor(Math
-                        .random() * WORDS.length)];
+                            .random() * WORDS.length)];
                         usedWords.push(w);
                         const s = await kpSearch(w);
                         if (s && s.filmId) {
@@ -936,7 +937,6 @@
                     feedback.textContent = '🖼️ Кадры не найдены';
                     feedback.className = 'feedback error'; }
 
-                // Синхронизация с комнатой
                 if (isConnected) syncGame();
 
             } catch (e) { feedback.textContent = '❌ ' + e.message;
@@ -1056,11 +1056,11 @@
         };
 
         // ============================================================
-        //  МУЛЬТИПЛЕЕР — PEERJS (РАБОТАЕТ ЧЕРЕЗ ИНТЕРНЕТ)
+        //  МУЛЬТИПЛЕЕР — PEERJS С ТАЙМАУТАМИ
         // ============================================================
 
         function syncGame() {
-            if (!isConnected || !conn) return;
+            if (!isConnected || !conn || !conn.open) return;
             const data = {
                 film: film,
                 omdb: omdb,
@@ -1068,21 +1068,28 @@
                 guessed: guessed,
                 players: players
             };
-            gameData = data;
             sendToPeer('sync', data);
         }
 
         function sendToPeer(type, data) {
-            if (!conn || conn.open === false) return;
-            conn.send({ type: type, data: data, from: myId, name: myName });
+            if (!conn || !conn.open) return;
+            try {
+                conn.send({ type: type, data: data, from: myId, name: myName });
+            } catch (e) {
+                console.error('Ошибка отправки:', e);
+            }
         }
 
         function initPeer() {
             if (peer) {
-                peer.destroy();
+                try { peer.destroy(); } catch (e) {}
                 peer = null;
             }
-            peer = new Peer(undefined, {
+
+            // Генерируем ID на основе кода комнаты
+            const peerId = isHost ? room : undefined;
+
+            peer = new Peer(peerId, {
                 debug: 0,
                 config: {
                     iceServers: [
@@ -1092,29 +1099,80 @@
                 }
             });
 
+            // Таймаут подключения
+            if (connectTimeout) clearTimeout(connectTimeout);
+            connectTimeout = setTimeout(() => {
+                if (!isConnected && isConnecting) {
+                    isConnecting = false;
+                    connectStatus.textContent = '❌ Таймаут подключения. Попробуйте ещё раз.';
+                    connectStatus.style.color = '#e74c3c';
+                    feedback.textContent = '❌ Таймаут подключения';
+                    feedback.className = 'feedback error';
+                    if (peer) { try { peer.destroy(); } catch (e) {} }
+                    peer = null;
+                    createBtn.style.display = 'inline-block';
+                    joinBtn.style.display = 'inline-block';
+                    leaveBtn.classList.add('hidden');
+                }
+            }, 10000);
+
             peer.on('open', (id) => {
                 console.log('Peer открыт:', id);
+                isConnecting = false;
+                if (connectTimeout) clearTimeout(connectTimeout);
+
                 if (isHost) {
-                    roomCodeDisplay.textContent = id.slice(0, 8);
+                    const shortId = id.slice(0, 8);
+                    roomCodeDisplay.textContent = shortId;
                     roomDisplay.style.display = 'inline-flex';
-                    connectStatus.textContent = '✅ Ожидание подключения... Код: ' + id.slice(0, 8);
+                    connectStatus.textContent = '✅ Ожидание подключения... Код: ' + shortId;
                     connectStatus.style.color = '#f39c12';
                     statusDot.className = 'status-dot waiting';
-                    roomInfo.innerHTML = '🏠 Вы хост. Код: <strong>' + id.slice(0, 8) + '</strong>';
+                    roomInfo.innerHTML = '🏠 Вы хост. Код: <strong>' + shortId + '</strong>';
+                    feedback.textContent = '✅ Комната создана. Ждите игроков.';
+                    feedback.className = 'feedback success';
                 }
             });
 
             peer.on('connection', (c) => {
                 console.log('Входящее подключение от:', c.peer);
-                conn = c;
-                setupConnection(c);
+                if (isHost) {
+                    conn = c;
+                    setupConnection(c);
+                }
             });
 
             peer.on('error', (err) => {
                 console.error('Peer ошибка:', err);
-                if (err.type === 'unavailable-id') {
-                    connectStatus.textContent = '❌ Ошибка: попробуйте другой код';
+                if (isConnecting) {
+                    isConnecting = false;
+                    if (err.type === 'unavailable-id') {
+                        connectStatus.textContent = '❌ Код уже используется. Попробуйте другой.';
+                        connectStatus.style.color = '#e74c3c';
+                        feedback.textContent = '❌ Код занят. Попробуйте другой.';
+                        feedback.className = 'feedback error';
+                    } else if (err.type === 'peer-unavailable') {
+                        connectStatus.textContent = '❌ Комната не найдена. Проверьте код.';
+                        connectStatus.style.color = '#e74c3c';
+                        feedback.textContent = '❌ Комната не найдена.';
+                        feedback.className = 'feedback error';
+                    }
+                    createBtn.style.display = 'inline-block';
+                    joinBtn.style.display = 'inline-block';
+                    leaveBtn.classList.add('hidden');
+                    if (peer) { try { peer.destroy(); } catch (e) {} }
+                    peer = null;
+                }
+            });
+
+            peer.on('disconnected', () => {
+                console.log('Peer отключён');
+                if (isConnected) {
+                    isConnected = false;
+                    statusDot.className = 'status-dot offline';
+                    connectStatus.textContent = '❌ Соединение потеряно';
                     connectStatus.style.color = '#e74c3c';
+                    addChat('🔌 Соединение потеряно', 'system');
                 }
             });
         }
@@ -1122,6 +1180,7 @@
         function setupConnection(c) {
             conn = c;
             isConnected = true;
+            isConnecting = false;
             statusDot.className = 'status-dot online';
             leaveBtn.classList.remove('hidden');
             createBtn.style.display = 'none';
@@ -1138,6 +1197,14 @@
                 feedback.textContent = '✅ Подключено к комнате ' + room;
                 feedback.className = 'feedback success';
                 addChat('👋 Вы вошли как <strong>' + myName + '</strong>', 'system');
+            } else {
+                addChat('👤 Игрок подключился!', 'system');
+                // Отправляем состояние хоста
+                setTimeout(() => {
+                    players[myId] = { name: myName, guessed: false };
+                    updateOnline();
+                    syncGame();
+                }, 300);
             }
 
             c.on('data', (data) => {
@@ -1154,15 +1221,6 @@
                 feedback.className = 'feedback error';
                 leaveRoom();
             });
-
-            // Если хост, отправляем состояние через секунду
-            if (isHost) {
-                setTimeout(() => {
-                    players[myId] = { name: myName, guessed: false };
-                    updateOnline();
-                    syncGame();
-                }, 500);
-            }
         }
 
         function handlePeerData(data) {
@@ -1229,7 +1287,7 @@
                 case 'skip':
                     if (data.data) {
                         addChat('⏭️ <strong>' + data.data.name + '</strong> пропустил. Это был "' + data.data.title + '"',
-                        'system');
+                            'system');
                         if (data.data.name !== myName && film) {
                             const name = film.nameRu || film.nameEn || omdb?.Title || 'Без названия';
                             revealTitle(name);
@@ -1274,6 +1332,7 @@
 
             room = code;
             isHost = true;
+            isConnecting = true;
             players = {};
             players[myId] = { name: myName, guessed: false };
             updateOnline();
@@ -1284,16 +1343,15 @@
             createBtn.style.display = 'none';
             joinBtn.style.display = 'none';
             leaveBtn.classList.remove('hidden');
-            chatInput.disabled = false;
-            chatSend.disabled = false;
+            chatInput.disabled = true;
+            chatSend.disabled = true;
             roomInfo.innerHTML = '🏠 Создание комнаты <strong>' + code + '</strong>...';
-            connectStatus.textContent = '⏳ Подключение...';
+            connectStatus.textContent = '⏳ Подключение к серверу...';
             connectStatus.style.color = '#f39c12';
             feedback.textContent = '⏳ Создание комнаты...';
             feedback.className = 'feedback loading';
 
             initPeer();
-            // Peer ID будет показан после открытия
         }
 
         function joinRoom() {
@@ -1311,6 +1369,7 @@
 
             room = code;
             isHost = false;
+            isConnecting = true;
             players = {};
             players[myId] = { name: myName, guessed: false };
             updateOnline();
@@ -1321,17 +1380,17 @@
             createBtn.style.display = 'none';
             joinBtn.style.display = 'none';
             leaveBtn.classList.remove('hidden');
-            chatInput.disabled = false;
-            chatSend.disabled = false;
+            chatInput.disabled = true;
+            chatSend.disabled = true;
             roomInfo.innerHTML = '🏠 Подключение к комнате <strong>' + code + '</strong>...';
             connectStatus.textContent = '⏳ Подключение...';
             connectStatus.style.color = '#f39c12';
             feedback.textContent = '⏳ Подключение к комнате...';
             feedback.className = 'feedback loading';
 
-            // Инициализируем Peer и подключаемся
+            // Инициализируем Peer и подключаемся к хосту
             if (peer) {
-                peer.destroy();
+                try { peer.destroy(); } catch (e) {}
                 peer = null;
             }
 
@@ -1345,25 +1404,43 @@
                 }
             });
 
+            // Таймаут
+            if (connectTimeout) clearTimeout(connectTimeout);
+            connectTimeout = setTimeout(() => {
+                if (!isConnected && isConnecting) {
+                    isConnecting = false;
+                    connectStatus.textContent = '❌ Таймаут подключения. Проверьте код.';
+                    connectStatus.style.color = '#e74c3c';
+                    feedback.textContent = '❌ Таймаут подключения';
+                    feedback.className = 'feedback error';
+                    createBtn.style.display = 'inline-block';
+                    joinBtn.style.display = 'inline-block';
+                    leaveBtn.classList.add('hidden');
+                    if (peer) { try { peer.destroy(); } catch (e) {} }
+                    peer = null;
+                }
+            }, 10000);
+
             peer.on('open', (id) => {
                 console.log('Peer открыт:', id);
+                isConnecting = false;
+                if (connectTimeout) clearTimeout(connectTimeout);
+
                 // Подключаемся к хосту по коду комнаты
-                const targetId = code;
-                const c = peer.connect(targetId);
+                const c = peer.connect(code);
                 if (c) {
+                    conn = c;
                     setupConnection(c);
-                    // Отправляем информацию о себе
                     c.on('open', () => {
                         c.send({ type: 'join', data: { id: myId, name: myName } });
-                        // Запрашиваем состояние
                         setTimeout(() => {
                             c.send({ type: 'sync', data: { request: true } });
                         }, 300);
                     });
                 } else {
-                    connectStatus.textContent = '❌ Комната не найдена';
+                    connectStatus.textContent = '❌ Не удалось подключиться';
                     connectStatus.style.color = '#e74c3c';
-                    feedback.textContent = '❌ Комната не найдена';
+                    feedback.textContent = '❌ Не удалось подключиться';
                     feedback.className = 'feedback error';
                     leaveRoom();
                 }
@@ -1371,12 +1448,19 @@
 
             peer.on('error', (err) => {
                 console.error('Peer ошибка:', err);
-                if (err.type === 'peer-unavailable') {
-                    connectStatus.textContent = '❌ Комната не найдена';
-                    connectStatus.style.color = '#e74c3c';
-                    feedback.textContent = '❌ Комната не найдена';
-                    feedback.className = 'feedback error';
-                    leaveRoom();
+                if (isConnecting) {
+                    isConnecting = false;
+                    if (err.type === 'peer-unavailable') {
+                        connectStatus.textContent = '❌ Комната не найдена. Проверьте код.';
+                        connectStatus.style.color = '#e74c3c';
+                        feedback.textContent = '❌ Комната не найдена';
+                        feedback.className = 'feedback error';
+                    }
+                    createBtn.style.display = 'inline-block';
+                    joinBtn.style.display = 'inline-block';
+                    leaveBtn.classList.add('hidden');
+                    if (peer) { try { peer.destroy(); } catch (e) {} }
+                    peer = null;
                 }
             });
         }
@@ -1396,8 +1480,11 @@
 
             isConnected = false;
             isHost = false;
+            isConnecting = false;
             room = null;
             players = {};
+            if (connectTimeout) clearTimeout(connectTimeout);
+
             roomCodeDisplay.textContent = '----';
             roomDisplay.style.display = 'none';
             statusDot.className = 'status-dot offline';
@@ -1440,18 +1527,17 @@
         });
 
         // ---------- ИНИЦИАЛИЗАЦИЯ ----------
-        // Восстанавливаем ключи
         if (localStorage.getItem('omdb')) omdbKey.value = localStorage.getItem('omdb');
         if (localStorage.getItem('kp')) kpKey.value = localStorage.getItem('kp');
 
-        // Автопроверка ключей
         setTimeout(() => {
             if (getOmdb() && getKp()) testBtn.click();
         }, 500);
 
         console.log('🎬 Угадай фильм — мультиплеер через PeerJS');
-        console.log('📌 Код комнаты — 4 цифры (введите в поле)');
+        console.log('📌 Код комнаты — 4 цифры');
         console.log('👤 Ваш ID:', myId);
+        console.log('💡 Если не подключается — попробуйте другой код');
     </script>
 </body>
 </html>
