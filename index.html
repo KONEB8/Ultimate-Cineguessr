@@ -1,345 +1,1390 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Угадай фильм</title>
-    <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f2f5;padding:16px;max-width:1200px;margin:0 auto;color:#1a1a2e}.main{display:grid;grid-template-columns:1fr 300px;gap:16px}@media(max-width:900px){.main{grid-template-columns:1fr}}.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;border:1px solid #e4e6eb}.card h3{font-size:14px;margin-bottom:10px}.flex{display:flex;flex-wrap:wrap;gap:8px}.flex input{flex:1;min-width:100px;padding:8px 12px;border:1px solid #d0d4dc;border-radius:8px;font-size:13px;background:#fafbfc}.flex input:focus{outline:0;border-color:#ff6b35}.flex button{padding:8px 16px;border:0;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;transition:.2s;background:#ff6b35;color:#fff}.flex button:hover{background:#e55a2b;transform:translateY(-1px)}.flex button.green{background:#2ecc71}.flex button.green:hover{background:#27ae60}.flex button.blue{background:#3498db}.flex button.blue:hover{background:#2980b9}.flex button.gray{background:#6c7a8d}.flex button.gray:hover{background:#5a687a}.flex button.red{background:#e74c3c}.flex button.red:hover{background:#c0392b}.badge{display:inline-block;padding:2px 12px;border-radius:20px;font-size:12px;font-weight:600}.badge.green{background:#d4edda;color:#155724}.badge.red{background:#f8d7da;color:#721c24}.badge.yellow{background:#fff3cd;color:#856404}.rooms-list{max-height:300px;overflow-y:auto}.room-item{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #eee;font-size:13px;cursor:pointer;transition:.15s}.room-item:hover{background:#f0f7ff}.room-item .info{display:flex;gap:12px;align-items:center}.room-item .code{font-weight:700;color:#ff6b35;font-family:monospace}.room-item .players{color:#888;font-size:12px}.room-item .locked{color:#e74c3c;font-size:14px}.frames-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:10px 0;min-height:140px}.frame-card{background:#f8f9fa;border-radius:8px;border:1px solid #e4e6eb;display:flex;align-items:center;justify-content:center;min-height:140px;overflow:hidden}.frame-card img{width:100%;height:180px;object-fit:cover}.frame-card .empty{padding:20px;color:#999;font-size:13px}.film-info{padding:10px 14px;background:#f8f9fa;border-radius:8px;border:1px solid #e4e6eb;margin:8px 0}.film-info .title{font-size:18px;font-weight:700;letter-spacing:4px;color:#999;background:#e9ecef;padding:2px 12px;border-radius:4px;display:inline-block}.film-info .title.reveal{color:#2ecc71;letter-spacing:0}.film-info .meta{font-size:13px;color:#555;margin-top:4px}.film-info .meta span{margin-right:12px}.guess-area{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.guess-area input{flex:1;min-width:120px;padding:8px 12px;border:1px solid #d0d4dc;border-radius:8px;font-size:14px;background:#fafbfc}.guess-area input:focus{outline:0;border-color:#ff6b35}.guess-area button{padding:8px 14px;border:0;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px}.guess-area button.guess{background:#2ecc71;color:#fff}.guess-area button.guess:hover{background:#27ae60}.guess-area button.hint{background:#f39c12;color:#fff}.guess-area button.hint:hover{background:#e67e22}.guess-area button.gray{background:#6c7a8d;color:#fff}.guess-area button.gray:hover{background:#5a687a}.stats{display:flex;gap:16px;padding:8px 12px;background:#f8f9fa;border-radius:8px;border:1px solid #e4e6eb;margin:8px 0;font-size:13px;flex-wrap:wrap}.stats span{display:flex;align-items:center;gap:4px}.stats .val{font-weight:700;font-size:16px}.stats .val.red{color:#e74c3c}.stats .val.green{color:#2ecc71}.feedback{padding:10px 14px;border-radius:8px;margin:8px 0;background:#f8f9fa;border:1px solid #e4e6eb;font-size:14px;min-height:38px}.feedback.ok{background:#d4edda;color:#155724}.feedback.err{background:#f8d7da;color:#721c24}.feedback.load{background:#e2e3e5}.chat{display:flex;flex-direction:column;height:100%;min-height:400px;background:#fff;border-radius:12px;border:1px solid #e4e6eb;overflow:hidden}.chat-header{padding:12px 16px;background:#f8f9fa;border-bottom:1px solid #e4e6eb;font-weight:600;display:flex;justify-content:space-between;font-size:14px}.chat-msgs{flex:1;padding:10px 14px;overflow-y:auto;max-height:350px;min-height:150px}.chat-msg{padding:3px 6px;font-size:13px;display:flex;flex-wrap:wrap;gap:3px}.chat-msg .name{font-weight:600}.chat-msg .name.me{color:#3498db}.chat-msg .name.you{color:#ff6b35}.chat-msg.sys{background:#f8f9fa;color:#666;font-style:italic;font-size:12px;border-radius:4px;padding:3px 8px}.chat-input{display:flex;gap:6px;padding:8px 12px;border-top:1px solid #e4e6eb;background:#fafbfc}.chat-input input{flex:1;padding:6px 10px;border:1px solid #d0d4dc;border-radius:6px;font-size:13px}.chat-input input:focus{outline:0;border-color:#ff6b35}.chat-input button{padding:6px 14px;border:0;border-radius:6px;background:#ff6b35;color:#fff;cursor:pointer;font-weight:600}.suggest{position:relative;margin:-4px 0 6px}.suggest-list{position:absolute;top:0;left:0;right:0;background:#fff;border:1px solid #d0d4dc;border-radius:8px;max-height:180px;overflow-y:auto;z-index:999;display:none;box-shadow:0 4px 12px rgba(0,0,0,.1)}.suggest-list.show{display:block}.suggest-list .item{padding:6px 12px;cursor:pointer;border-bottom:1px solid #f0f2f5;display:flex;justify-content:space-between;font-size:13px}.suggest-list .item:hover{background:#f0f7ff}.suggest-list .item .year{color:#888;font-size:12px}.footer{margin-top:16px;font-size:12px;color:#888;text-align:center;border-top:1px solid #e4e6eb;padding-top:12px}.footer a{color:#ff6b35;text-decoration:none}.hint-btns{display:flex;gap:6px;margin:4px 0;flex-wrap:wrap}.hint-btns button{padding:4px 12px;border:1px solid #d0d4dc;border-radius:16px;background:#fafbfc;cursor:pointer;font-size:12px}.hint-btns button:disabled{opacity:.5;cursor:not-allowed}.hint-btns button.active{background:#ff6b35;color:#fff;border-color:#ff6b35}.mode{display:inline-block;padding:2px 12px;border-radius:20px;font-size:11px;font-weight:600;margin-left:8px}.mode.hard{background:#e8f5e9;color:#2e7d32}.mode.easy{background:#fff3e0;color:#e65100}</style>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            padding: 16px;
+            max-width: 1000px;
+            margin: 0 auto;
+            color: #1a1a2e;
+        }
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 16px;
+        }
+        @media(max-width:750px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid #e4e6eb;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .card h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .input-group input {
+            flex: 1;
+            min-width: 80px;
+            padding: 7px 10px;
+            border: 1px solid #d0d4dc;
+            border-radius: 6px;
+            font-size: 13px;
+            background: #fafbfc;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #ff6b35;
+        }
+        .input-group button {
+            padding: 7px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            background: #ff6b35;
+            color: #fff;
+            white-space: nowrap;
+        }
+        .input-group button:hover {
+            background: #e55a2b;
+        }
+        .input-group button.green {
+            background: #2ecc71;
+        }
+        .input-group button.green:hover {
+            background: #27ae60;
+        }
+        .input-group button.blue {
+            background: #3498db;
+        }
+        .input-group button.blue:hover {
+            background: #2980b9;
+        }
+        .input-group button.gray {
+            background: #6c7a8d;
+        }
+        .input-group button.gray:hover {
+            background: #5a687a;
+        }
+        .frames-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 10px 0;
+            min-height: 150px;
+        }
+        .frame-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e4e6eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px;
+            overflow: hidden;
+        }
+        .frame-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+        .frame-card .no-image {
+            color: #999;
+            font-size: 13px;
+            padding: 20px;
+            text-align: center;
+        }
+        .film-info {
+            background: #f8f9fa;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid #e4e6eb;
+            margin: 8px 0;
+        }
+        .film-info .hidden-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #999;
+            letter-spacing: 6px;
+            background: #e9ecef;
+            padding: 2px 12px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .film-info .revealed-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2ecc71;
+        }
+        .film-info .meta {
+            font-size: 13px;
+            color: #555;
+            margin-top: 4px;
+        }
+        .film-info .meta span {
+            margin-right: 12px;
+        }
+        .guess-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 10px 0;
+        }
+        .guess-area input {
+            flex: 1;
+            min-width: 120px;
+            padding: 8px 12px;
+            border: 1px solid #d0d4dc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .guess-area input:focus {
+            outline: none;
+            border-color: #ff6b35;
+        }
+        .guess-area button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .guess-area button.guess {
+            background: #2ecc71;
+            color: #fff;
+        }
+        .guess-area button.guess:hover {
+            background: #27ae60;
+        }
+        .guess-area button.suggest {
+            background: #3498db;
+            color: #fff;
+        }
+        .guess-area button.suggest:hover {
+            background: #2980b9;
+        }
+        .guess-area button.gray {
+            background: #6c7a8d;
+            color: #fff;
+        }
+        .guess-area button.gray:hover {
+            background: #5a687a;
+        }
+        .guess-area button.orange {
+            background: #f39c12;
+            color: #fff;
+        }
+        .guess-area button.orange:hover {
+            background: #e67e22;
+        }
+        .stats-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e4e6eb;
+            margin: 8px 0;
+            font-size: 13px;
+        }
+        .stats-bar .stat-item .value {
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .stats-bar .stat-item .value.errors {
+            color: #e74c3c;
+        }
+        .stats-bar .stat-item .value.wins {
+            color: #2ecc71;
+        }
+        .feedback {
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin: 8px 0;
+            background: #f8f9fa;
+            border: 1px solid #e4e6eb;
+            min-height: 38px;
+            font-size: 14px;
+        }
+        .feedback.success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .feedback.error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .feedback.loading {
+            background: #e2e3e5;
+            border-color: #d6d8db;
+            color: #383d41;
+        }
+        .feedback.info {
+            background: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+        .hint-buttons {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin: 6px 0;
+        }
+        .hint-buttons button {
+            padding: 4px 12px;
+            border: 1px solid #d0d4dc;
+            border-radius: 16px;
+            background: #fafbfc;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .hint-buttons button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .hint-buttons button.active {
+            background: #ff6b35;
+            color: #fff;
+            border-color: #ff6b35;
+        }
+        .suggestions-list {
+            position: absolute;
+            background: #fff;
+            border: 1px solid #d0d4dc;
+            border-radius: 8px;
+            max-height: 180px;
+            overflow-y: auto;
+            z-index: 100;
+            width: 100%;
+            display: none;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+        .suggestions-list.show {
+            display: block;
+        }
+        .suggestions-list .item {
+            padding: 7px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f2f5;
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+        .suggestions-list .item:hover {
+            background: #f0f7ff;
+        }
+        .suggestions-list .item .title {
+            font-weight: 500;
+        }
+        .suggestions-list .item .year {
+            color: #888;
+            font-size: 12px;
+        }
+        .suggestions-container {
+            position: relative;
+        }
+        .chat-container {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #e4e6eb;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 400px;
+        }
+        .chat-header {
+            padding: 10px 14px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e4e6eb;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 10px 14px;
+            overflow-y: auto;
+            max-height: 350px;
+            min-height: 150px;
+            font-size: 13px;
+        }
+        .chat-messages .msg {
+            padding: 3px 6px;
+            margin-bottom: 2px;
+            border-radius: 4px;
+        }
+        .chat-messages .msg.system {
+            background: #f8f9fa;
+            color: #666;
+            font-style: italic;
+            font-size: 12px;
+        }
+        .chat-messages .msg .name {
+            font-weight: 600;
+        }
+        .chat-messages .msg .name.me {
+            color: #3498db;
+        }
+        .chat-messages .msg .name.you {
+            color: #ff6b35;
+        }
+        .chat-input {
+            display: flex;
+            gap: 6px;
+            padding: 8px 14px;
+            border-top: 1px solid #e4e6eb;
+        }
+        .chat-input input {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid #d0d4dc;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .chat-input button {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 6px;
+            background: #ff6b35;
+            color: #fff;
+            cursor: pointer;
+        }
+        .room-code {
+            font-family: monospace;
+            font-size: 24px;
+            font-weight: 700;
+            color: #ff6b35;
+            letter-spacing: 4px;
+            padding: 4px 16px;
+            background: #fff5f0;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        .status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .status-dot.online {
+            background: #2ecc71;
+        }
+        .status-dot.offline {
+            background: #e74c3c;
+        }
+        .status-dot.waiting {
+            background: #f39c12;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+        .footer {
+            margin-top: 16px;
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            border-top: 1px solid #e4e6eb;
+            padding-top: 12px;
+        }
+        .inline-flex {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        @media(max-width:600px) {
+            .frames-grid {
+                grid-template-columns: 1fr;
+            }
+            .frame-card img {
+                height: 140px;
+            }
+            .guess-area {
+                flex-direction: column;
+            }
+            .guess-area input {
+                width: 100%;
+            }
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
 
-<h1>🎬 Угадай фильм <small style="font-size:14px;color:#888;font-weight:400;">Мультиплеер</small><span class="mode hard" id="modeLabel">🎲 Сложный</span></h1>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+        <h1 style="font-size:24px;">🎬 Угадай фильм</h1>
+        <div class="inline-flex">
+            <span id="roomDisplay" style="font-size:13px;color:#888;">Код: <span class="room-code" id="roomCodeDisplay">----</span></span>
+            <span id="playerCount" style="font-size:13px;color:#888;">👤 1</span>
+            <span id="statusDot" class="status-dot offline"></span>
+        </div>
+    </div>
 
-<div class="main">
-<div>
+    <div class="main-grid">
+        <div>
+            <!-- Ключи -->
+            <div class="card">
+                <div class="input-group">
+                    <input type="text" id="omdbKey" placeholder="OMDb ключ" value="eadc65c8">
+                    <input type="text" id="kpKey" placeholder="KP ключ" value="5e8d3a33-e69d-46b0-b5a2-326310ba29e7">
+                    <button id="testBtn">Проверить</button>
+                </div>
+                <div id="keyStatus" style="font-size:12px;color:#888;margin-top:4px;">⏳ Введите ключи</div>
+            </div>
 
-<div class="card">
-<h3>🔑 Ключи</h3>
-<div class="flex">
-<input id="omdbKey" placeholder="OMDb ключ" value="eadc65c8">
-<input id="kpKey" placeholder="KP X-API-KEY" value="5e8d3a33-e69d-46b0-b5a2-326310ba29e7">
-<button onclick="testKeys()">✅</button>
-</div>
-<div id="keyStatus"><span class="badge yellow">⏳ Введите ключи</span></div>
-</div>
+            <!-- Комната -->
+            <div class="card">
+                <div class="input-group">
+                    <input type="text" id="roomInput" placeholder="4 цифры" maxlength="4" style="max-width:100px;">
+                    <button id="createBtn" class="green">Создать</button>
+                    <button id="joinBtn" class="blue">Войти</button>
+                    <button id="leaveBtn" class="gray" style="display:none;">Выйти</button>
+                </div>
+                <div id="roomInfo" style="font-size:12px;color:#888;margin-top:4px;">💡 Создайте комнату (4 цифры)</div>
+            </div>
 
-<div class="card">
-<h3>🏠 Комната</h3>
-<div class="flex">
-<input id="playerName" placeholder="Имя" value="Игрок" style="flex:0.5;min-width:80px">
-<input id="roomCode" placeholder="Код комнаты" style="flex:0.7;min-width:80px">
-<button class="green" onclick="createRoom()">➕ Создать</button>
-<button class="blue" onclick="joinRoom()">🔗 Войти</button>
-<button class="red" onclick="leaveRoom()" id="leaveBtn" style="display:none">🚪 Выйти</button>
-</div>
-<div class="flex" style="margin-top:6px">
-<button class="gray" onclick="setPass()">🔐 Пароль: <span id="passDisplay">нет</span></button>
-<button class="gray" onclick="generatePass()">🎲 Сгенерировать</button>
-</div>
-<div id="roomInfo" style="font-size:12px;color:#888;margin-top:4px">💡 Создайте комнату</div>
-<div id="connStatus" style="margin-top:4px"><span class="badge red">⛔ Не подключен</span></div>
-</div>
+            <!-- Игра -->
+            <div class="card">
+                <div class="stats-bar">
+                    <span class="stat-item">🎯 <span class="value" id="attempts">0</span></span>
+                    <span class="stat-item">✅ <span class="value wins" id="wins">0</span></span>
+                    <span class="stat-item">❌ <span class="value errors" id="errors">0</span></span>
+                    <button id="resetStats" style="margin-left:auto;padding:2px 10px;border:none;border-radius:4px;background:#e4e6eb;cursor:pointer;font-size:12px;">Сброс</button>
+                </div>
 
-<div class="card">
-<h3>🎯 Игра</h3>
-<div class="stats">
-<span>🎯 Попыток: <span class="val" id="attempts">0</span></span>
-<span>✅ Угадано: <span class="val green" id="wins">0</span></span>
-<span>❌ Ошибок: <span class="val red" id="errors">0</span></span>
-<button onclick="resetStats()" style="margin-left:auto;padding:2px 10px;border:0;border-radius:4px;background:#e4e6eb;cursor:pointer;font-size:12px">🔄</button>
-</div>
+                <div class="frames-grid" id="frames">
+                    <div class="frame-card"><div class="no-image">Загрузите фильм</div></div>
+                    <div class="frame-card"><div class="no-image">Загрузите фильм</div></div>
+                    <div class="frame-card"><div class="no-image">Загрузите фильм</div></div>
+                </div>
 
-<div class="frames-grid" id="frames">
-<div class="frame-card"><div class="empty">Загрузите фильм</div></div>
-<div class="frame-card"><div class="empty">Загрузите фильм</div></div>
-<div class="frame-card"><div class="empty">Загрузите фильм</div></div>
-</div>
+                <div class="film-info">
+                    <div id="titleDisplay" class="hidden-title">???</div>
+                    <div class="meta">
+                        <span id="fYear">📅 —</span>
+                        <span id="fGenre">🎭 —</span>
+                        <span id="fRuntime">⏱️ —</span>
+                        <span id="fRating">⭐ —</span>
+                        <span id="fDirector">🎬 —</span>
+                    </div>
+                </div>
 
-<div class="film-info">
-<div class="title" id="titleDisplay">???</div>
-<div class="meta">
-<span id="fYear">📅 —</span>
-<span id="fGenre">🎭 —</span>
-<span id="fRuntime">⏱️ —</span>
-<span id="fRating">⭐ —</span>
-<span id="fDirector">🎬 —</span>
-</div>
-</div>
+                <div class="hint-buttons">
+                    <button id="hRating" disabled>⭐ Рейтинг</button>
+                    <button id="hYear" disabled>📅 Год</button>
+                    <button id="hDirector" disabled>🎬 Режиссёр</button>
+                </div>
 
-<div class="hint-btns">
-<button onclick="showHint('rating')" id="hRating" disabled>⭐ Рейтинг</button>
-<button onclick="showHint('year')" id="hYear" disabled>📅 Год</button>
-<button onclick="showHint('director')" id="hDirector" disabled>🎬 Режиссёр</button>
-</div>
+                <div class="guess-area">
+                    <input type="text" id="guessInput" placeholder="Название...">
+                    <button class="guess" id="guessBtn">Угадать</button>
+                    <button class="suggest" id="suggestBtn">Подбор</button>
+                    <button class="gray" id="skipBtn">Пропустить</button>
+                    <button class="gray" id="newBtn">Случайный</button>
+                    <button class="orange" id="easyBtn">Лёгкий</button>
+                </div>
 
-<div class="guess-area">
-<input id="guessInput" placeholder="Название...">
-<button class="guess" onclick="guess()">✅ Угадать</button>
-<button class="hint" onclick="suggest()">🔍 Подбор</button>
-<button class="gray" onclick="skip()">⏭️</button>
-<button class="gray" onclick="loadFilm('random')">🎲</button>
-<button class="hint" onclick="loadFilm('easy')">🌟</button>
-</div>
+                <div class="suggestions-container">
+                    <div class="suggestions-list" id="suggestList">
+                        <div class="item" style="color:#888;justify-content:center;">Введите слово и нажмите «Подбор»</div>
+                    </div>
+                </div>
 
-<div class="suggest"><div class="suggest-list" id="suggestList"><div class="item" style="color:#888;justify-content:center;padding:12px">💡 Введите слово и нажмите «Подбор»</div></div></div>
+                <div class="feedback" id="feedback">💡 Создайте или войдите в комнату</div>
+            </div>
+        </div>
 
-<div class="feedback" id="feedback">💡 Введите ключи и создайте комнату</div>
-</div>
-</div>
+        <!-- Чат -->
+        <div class="chat-container">
+            <div class="chat-header">
+                💬 Чат
+                <span id="onlineCount">👤 0</span>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="msg system">💡 Создайте или войдите в комнату</div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="chatInput" placeholder="Сообщение..." disabled>
+                <button id="chatSend" disabled>📤</button>
+            </div>
+        </div>
+    </div>
 
-<div class="chat">
-<div class="chat-header">💬 Чат <span id="onlineCount">👤 0</span></div>
-<div class="chat-msgs" id="chatMsgs"><div class="chat-msg sys">💡 Создайте комнату</div></div>
-<div class="chat-input">
-<input id="chatInput" placeholder="Сообщение..." disabled>
-<button onclick="sendChat()" id="chatSend" disabled>📤</button>
-</div>
-</div>
+    <div class="footer">OMDb + Kinopoisk API · Код комнаты — 4 цифры</div>
 
-<div class="chat" style="margin-top:12px">
-<div class="chat-header">🏠 Комнаты <span style="font-weight:400;font-size:12px;color:#888">(онлайн)</span></div>
-<div class="rooms-list" id="roomsList"><div style="padding:12px;color:#888;text-align:center;font-size:13px">Нет активных комнат</div></div>
-</div>
-</div>
+    <script>
+        // ============================================================
+        //  МАКСИМАЛЬНО КОМПАКТНАЯ ВЕРСИЯ
+        //  Синхронизация через localStorage + BroadcastChannel
+        // ============================================================
 
-<div class="footer"><a href="https://www.omdbapi.com/" target="_blank">OMDb</a> · <a href="https://kinopoiskapiunofficial.tech/" target="_blank">Kinopoisk</a> · PeerJS</div>
+        // ---------- КОНФИГ ----------
+        const OMDB = 'https://www.omdbapi.com/';
+        const KP = 'https://kinopoiskapiunofficial.tech/api';
+        const WORDS = ['интерстеллар', 'матрица', 'титаник', 'аватар', 'гладиатор',
+            'форрест гамп', 'зеленая миля', 'боец', 'джокер', 'паразиты',
+            'побег из шоушенка', 'крестный отец', 'темный рыцарь',
+            'криминальное чтиво', 'список шиндлера', 'властелин колец',
+            'гарри поттер', 'пираты карибского моря', 'терминатор'
+        ];
 
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-<script>
-// ============================================================
-//  КОНФИГ
-// ============================================================
-const OMDb = 'https://www.omdbapi.com/';
-const KP = 'https://kinopoiskapiunofficial.tech/api';
-const WORDS = ['интерстеллар','матрица','титаник','аватар','гладиатор','форрест гамп','зеленая миля','джокер','паразиты','побег из шоушенка','крестный отец','темный рыцарь','криминальное чтиво','властелин колец','гарри поттер','пираты карибского моря','терминатор','назад в будущее','индиана джонс','звездные войны'];
+        // ---------- DOM ----------
+        const $ = id => document.getElementById(id);
+        const omdbKey = $('omdbKey'),
+            kpKey = $('kpKey'),
+            testBtn = $('testBtn'),
+            keyStatus = $('keyStatus');
+        const roomInput = $('roomInput'),
+            createBtn = $('createBtn'),
+            joinBtn = $('joinBtn'),
+            leaveBtn = $('leaveBtn'),
+            roomInfo = $('roomInfo'),
+            roomCodeDisplay = $('roomCodeDisplay'),
+            roomDisplay = $('roomDisplay'),
+            playerCount = $('playerCount'),
+            statusDot = $('statusDot');
+        const frames = $('frames'),
+            titleDisplay = $('titleDisplay'),
+            fYear = $('fYear'),
+            fGenre = $('fGenre'),
+            fRuntime = $('fRuntime'),
+            fRating = $('fRating'),
+            fDirector = $('fDirector');
+        const guessInput = $('guessInput'),
+            guessBtn = $('guessBtn'),
+            suggestBtn = $('suggestBtn'),
+            skipBtn = $('skipBtn'),
+            newBtn = $('newBtn'),
+            easyBtn = $('easyBtn');
+        const hRating = $('hRating'),
+            hYear = $('hYear'),
+            hDirector = $('hDirector');
+        const feedback = $('feedback'),
+            suggestList = $('suggestList');
+        const chatMessages = $('chatMessages'),
+            chatInput = $('chatInput'),
+            chatSend = $('chatSend'),
+            onlineCount = $('onlineCount');
+        const attemptsEl = $('attempts'),
+            winsEl = $('wins'),
+            errorsEl = $('errors'),
+            resetStats = $('resetStats');
 
-// ============================================================
-//  СОСТОЯНИЕ
-// ============================================================
-let film={id:null,data:null,omdb:null}, guessed=false, loading=false, easy=false;
-let stats={attempts:0,wins:0,errors:0};
-let peer=null, conn=null, isHost=false, room=null, pass='', myName='Игрок';
-let players={}, usedWords=[], hints={rating:false,year:false,director:false};
+        // ---------- СОСТОЯНИЕ ----------
+        let film = null,
+            omdb = null,
+            filmId = null,
+            guessed = false,
+            loading = false,
+            easyMode = false;
+        let stats = JSON.parse(localStorage.getItem('stats') || '{"a":0,"w":0,"e":0}');
+        let myName = 'Игрок' + Math.floor(Math.random() * 100);
+        let room = null,
+            isHost = false,
+            connected = false;
+        let hints = { r: false, y: false, d: false };
+        let usedWords = [];
+        let channel = null;
+        let players = {};
+        let myId = 'p' + Date.now() + Math.random().toString(36).slice(2, 4);
 
-// ============================================================
-//  DOM
-// ============================================================
-const $=(id)=>document.getElementById(id);
-const omdbKey=$('omdbKey'), kpKey=$('kpKey'), pName=$('playerName'), rCode=$('roomCode');
-const frames=$('frames'), titleD=$('titleDisplay');
-const fYear=$('fYear'), fGenre=$('fGenre'), fRuntime=$('fRuntime'), fRating=$('fRating'), fDirector=$('fDirector');
-const guessIn=$('guessInput'), feedback=$('feedback'), chatMsgs=$('chatMsgs'), chatIn=$('chatInput'), chatSend=$('chatSend');
-const roomsList=$('roomsList'), connStatus=$('connStatus'), roomInfo=$('roomInfo'), leaveBtn=$('leaveBtn');
-const passDisplay=$('passDisplay'), onlineCount=$('onlineCount'), modeLabel=$('modeLabel');
-const hRating=$('hRating'), hYear=$('hYear'), hDirector=$('hDirector');
-const suggestList=$('suggestList');
+        // ---------- СТАТИСТИКА ----------
+        function updateStats() {
+            attemptsEl.textContent = stats.a;
+            winsEl.textContent = stats.w;
+            errorsEl.textContent = stats.e;
+            localStorage.setItem('stats', JSON.stringify(stats));
+        }
+        updateStats();
 
-// ============================================================
-//  КЛЮЧИ
-// ============================================================
-function getOK(){let t=omdbKey.value.trim();if(!t){t=localStorage.getItem('omdb')||'';if(t)omdbKey.value=t}return t}
-function getKK(){let t=kpKey.value.trim();if(!t){t=localStorage.getItem('kp')||'';if(t)kpKey.value=t}return t}
-function saveKeys(){localStorage.setItem('omdb',omdbKey.value);localStorage.setItem('kp',kpKey.value)}
-omdbKey.onchange=saveKeys; kpKey.onchange=saveKeys;
+        function addAttempt() { stats.a++;
+            updateStats(); }
 
-async function testKeys(){
-const ok=getOK(), kk=getKK(); if(!ok||!kk){status('❌ Введите оба ключа','err');return}
-status('⏳ Проверка...','load');
-try{
-const r=await fetch(`${OMDb}?apikey=${ok}&t=test`); const d=await r.json();
-if(d.Response==='False'){status('❌ OMDb ключ не работает','err');return}
-const r2=await fetch(`${KP}/v2.2/films/301`,{headers:{'X-API-KEY':kk}});
-if(!r2.ok){status('❌ KP ключ не работает','err');return}
-status('✅ Ключи работают!','ok');
-}catch(e){status(`❌ Ошибка: ${e.message}`,'err')}
-}
+        function addWin() { stats.w++;
+            updateStats(); }
 
-// ============================================================
-//  СТАТИСТИКА
-// ============================================================
-function loadStats(){try{const s=localStorage.getItem('stats');if(s)stats=JSON.parse(s)}catch(e){}updateStats()}
-function saveStats(){localStorage.setItem('stats',JSON.stringify(stats));updateStats()}
-function updateStats(){$('attempts').textContent=stats.attempts;$('wins').textContent=stats.wins;$('errors').textContent=stats.errors}
-function resetStats(){stats={attempts:0,wins:0,errors:0};saveStats();status('📊 Сброшено','ok')}
-function addAttempt(){stats.attempts++;saveStats()}
-function addWin(){stats.wins++;saveStats()}
-function addError(){stats.errors++;saveStats()}
+        function addError() { stats.e++;
+            updateStats(); }
 
-// ============================================================
-//  ВСПОМОГАТЕЛЬНЫЕ
-// ============================================================
-function status(t,type=''){feedback.textContent=t;feedback.className='feedback '+type}
-function connStat(t,c){connStatus.innerHTML=`<span class="badge ${c}">${t}</span>`}
-function chatAdd(t,who=null,sys=false){
-const d=document.createElement('div');d.className='chat-msg'+(sys?' sys':'');
-if(who){const s=document.createElement('span');s.className='name '+(who===myName?'me':'you');s.textContent=who;d.appendChild(s);d.appendChild(document.createTextNode(' '))}
-const sp=document.createElement('span');sp.innerHTML=t;d.appendChild(sp);chatMsgs.appendChild(d);chatMsgs.scrollTop=chatMsgs.scrollHeight
-}
-function roomsAdd(code,host,count,locked){/* через PeerJS это не нужно, но для совместимости */}
+        resetStats.onclick = () => { stats = { a: 0, w: 0, e: 0 };
+            updateStats();
+            addChat('📊 Статистика сброшена', 'system'); };
 
-function showFrames(imgs){
-frames.innerHTML='';
-if(!imgs||!imgs.length){for(let i=0;i<3;i++){const c=document.createElement('div');c.className='frame-card';c.innerHTML='<div class="empty">🖼️ Нет кадра</div>';frames.appendChild(c)}return}
-const s=imgs.slice(0,3);while(s.length<3)s.push(null);
-s.forEach(u=>{const c=document.createElement('div');c.className='frame-card';if(u){const i=document.createElement('img');i.src=u;i.onerror=function(){this.style.display='none';const e=document.createElement('div');e.className='empty';e.textContent='❌ Ошибка';c.appendChild(e)};c.appendChild(i)}else{c.innerHTML='<div class="empty">🖼️ Нет кадра</div>'}frames.appendChild(c)})
-}
-function showTitle(t,reveal=false){titleD.className='title'+(reveal?' reveal':'');titleD.textContent=reveal?t:'???'}
-function showMeta(y,g,r,rt,dr){fYear.textContent=`📅 ${y||'—'}`;fGenre.textContent=`🎭 ${g||'—'}`;fRuntime.textContent=`⏱️ ${r||'—'}`;fRating.textContent=`⭐ ${rt||'—'}`;fDirector.textContent=`🎬 ${dr||'—'}`}
-function resetHints(){hints={rating:false,year:false,director:false};[hRating,hYear,hDirector].forEach(b=>{b.textContent=b.id.replace('h','');b.className='';b.disabled=true});fRating.textContent='⭐ —';fYear.textContent='📅 —';fDirector.textContent='🎬 —'}
-function enableHints(){[hRating,hYear,hDirector].forEach(b=>b.disabled=false)}
+        // ---------- ЧАТ ----------
+        function addChat(text, type = '', player = null) {
+            const d = document.createElement('div');
+            d.className = 'msg' + (type ? ' ' + type : '');
+            if (player) {
+                const n = document.createElement('span');
+                n.className = 'name' + (player === myName ? ' me' : ' you');
+                n.textContent = player + ' ';
+                d.appendChild(n);
+            }
+            const t = document.createElement('span');
+            t.innerHTML = text;
+            d.appendChild(t);
+            chatMessages.appendChild(d);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
 
-function showHint(t){
-if(!film.data||guessed||hints[t])return;hints[t]=true;const b=document.getElementById('h'+t[0].toUpperCase()+t.slice(1));
-const data={rating:()=>{const v=film.omdb?.imdbRating||'—';fRating.textContent=`⭐ ${v}`;if(b){b.textContent='✅ Рейтинг';b.className='active'}},
-year:()=>{const v=film.omdb?.Year||film.data?.year||'—';fYear.textContent=`📅 ${v}`;if(b){b.textContent='✅ Год';b.className='active'}},
-director:()=>{const v=film.omdb?.Director||'—';fDirector.textContent=`🎬 ${v}`;if(b){b.textContent='✅ Режиссёр';b.className='active'}}};data[t]()}
+        function updateOnline() {
+            const count = Object.keys(players).length || (connected ? 1 : 0);
+            onlineCount.textContent = '👤 ' + count;
+            playerCount.textContent = '👤 ' + count;
+        }
 
-// ============================================================
-//  API
-// ============================================================
-async function omdbSearch(q){const k=getOK();if(!k)return[];try{const r=await fetch(`${OMDb}?apikey=${k}&s=${encodeURIComponent(q)}&type=movie`);const d=await r.json();return d.Response==='True'?d.Search.slice(0,5):[]}catch(e){return[]}}
-async function omdbById(id){const k=getOK();if(!k)return null;try{const r=await fetch(`${OMDb}?apikey=${k}&i=tt${id}`);const d=await r.json();return d.Response==='True'?d:null}catch(e){return null}}
-async function kpSearch(t){const k=getKK();if(!k)return null;try{const r=await fetch(`${KP}/v2.1/films/search-by-keyword?keyword=${encodeURIComponent(t)}&page=1`,{headers:{'X-API-KEY':k}});const d=await r.json();return d.films?.find(f=>f.filmId)||null}catch(e){return null}}
-async function kpById(id){const k=getKK();if(!k)return null;try{const r=await fetch(`${KP}/v2.2/films/${id}`,{headers:{'X-API-KEY':k}});const d=await r.json();return r.ok?d:null}catch(e){return null}}
-async function kpFrames(id){const k=getKK();if(!k)return[];try{const r=await fetch(`${KP}/v2.2/films/${id}/images`,{headers:{'X-API-KEY':k}});const d=await r.json();if(r.ok&&d.items){let f=d.items.filter(i=>['SCREENSHOT','FRAME','STILL','SHOT'].includes((i.type||'').toUpperCase())).map(i=>i.imageUrl).filter(u=>u);if(f.length)return f;let o=d.items.filter(i=>!['POSTER','COVER','DVD','BLU-RAY'].includes((i.type||'').toUpperCase())).map(i=>i.imageUrl).filter(u=>u);if(o.length)return o;return d.items.map(i=>i.imageUrl).filter(u=>u)}return[]}catch(e){return[]}}
-function genId(){return String(Math.floor(Math.random()*20000000)+1).padStart(7,'0')}
+        // ---------- КЛЮЧИ ----------
+        function getOmdb() { return omdbKey.value.trim() || localStorage.getItem('omdb') || ''; }
 
-async function loadFilm(mode='random'){
-if(!getOK()||!getKK()){status('❌ Введите ключи','err');return}
-if(loading)return;loading=true;guessed=false;easy=(mode==='easy');modeLabel.textContent=easy?'🌟 Лёгкий':'🎲 Сложный';modeLabel.className='mode '+(easy?'easy':'hard');
-status(easy?'⏳ Поиск лёгкого...':'⏳ Поиск случайного...','load');
-frames.innerHTML='<div class="frame-card"><div class="empty">⏳</div></div><div class="frame-card"><div class="empty">⏳</div></div><div class="frame-card"><div class="empty">⏳</div></div>';
-showTitle('???');showMeta();resetHints();guessIn.value='';guessIn.disabled=true;
-try{
-let omdbM=null,kpF=null,fid=null;
-if(easy){
-let f=null,att=0;while(att<5&&!f){if(usedWords.length>=WORDS.length)usedWords=[];const av=WORDS.filter(w=>!usedWords.includes(w));const w=av.length?av[Math.floor(Math.random()*av.length)]:WORDS[Math.floor(Math.random()*WORDS.length)];usedWords.push(w);f=await kpSearch(w);att++;if(f&&f.filmId){const fr=await kpFrames(f.filmId);if(!fr.length)f=null}}
-if(!f||!f.filmId){status('❌ Не найден','err');loading=false;guessIn.disabled=false;return}
-fid=f.filmId;const d=await kpById(fid);if(d)kpF=d;const om=await fetch(`${OMDb}?apikey=${getOK()}&t=${encodeURIComponent(f.nameRu||f.nameEn)}`);const od=await om.json();if(od.Response==='True')omdbM=od;
-}else{
-let att=0,found=false;while(att<10&&!found){const id=genId();const m=await omdbById(id);if(m){omdbM=m;found=true;const s=await kpSearch(m.Title);if(s&&s.filmId){fid=s.filmId;const d=await kpById(fid);if(d)kpF=d;const fr=await kpFrames(fid);if(!fr.length){found=false;omdbM=null;kpF=null;fid=null;continue}}else{found=false;omdbM=null;continue}}att++}
-if(!found||!omdbM||!kpF){status('❌ Не найден с кадрами','err');loading=false;guessIn.disabled=false;return}
-}
-if(!kpF||!fid){status('❌ Ошибка загрузки','err');loading=false;guessIn.disabled=false;return}
-film={id:fid,data:kpF,omdb:omdbM};
-const name=kpF.nameRu||kpF.nameEn||omdbM?.Title||'Без названия';
-showMeta(omdbM?.Year||kpF.year,omdbM?.Genre||(kpF.genres?kpF.genres.map(g=>g.genre).join(', '):'—'),omdbM?.Runtime||(kpF.filmLength?kpF.filmLength+' мин':'—'),'—','—');
-const fr=await kpFrames(fid);if(fr.length){showFrames(fr);status(`🎬 Какой фильм? (${Math.min(fr.length,3)} кадров)`,'ok')}else{showFrames([]);status('🖼️ Кадров нет','err')}
-if(isHost&&conn){setTimeout(()=>broadcast(),300)}
-guessIn.disabled=false;guessIn.focus();
-}catch(e){status(`❌ ${e.message}`,'err')}loading=false
-}
+        function getKp() { return kpKey.value.trim() || localStorage.getItem('kp') || ''; }
 
-// ============================================================
-//  ИГРА
-// ============================================================
-function guess(){
-if(loading||!film.data||guessed)return;const g=guessIn.value.trim();if(!g){status('✏️ Введите название','err');return}suggestList.classList.remove('show');
-const name=film.data.nameRu||film.data.nameEn||film.omdb?.Title||'', en=film.data.nameEn||film.omdb?.Title||'';
-const gl=g.toLowerCase().trim(), nl=name.toLowerCase().trim(), el=en.toLowerCase().trim();
-const ok=gl===nl||gl===el||nl.includes(gl)||gl.includes(nl)||(el&&el.includes(gl));
-addAttempt();
-if(conn)broadcastGuess(ok,g);else{chatAdd(ok?'🎯 угадал!':'❌ '+g+' — не угадал',myName)}
-if(ok){guessed=true;addWin();showTitle(name,true);status(`🎉 Правильно! "${name}"!`,'ok');guessIn.disabled=true;if(isHost&&conn)broadcast()}else{addError();status(`❌ Не угадал (ошибок: ${stats.errors})`,'err');guessIn.value='';guessIn.focus()}
-}
-async function suggest(){
-const q=guessIn.value.trim();if(!q){status('✏️ Введите слово','err');return}if(guessed||!film.data){status('❌ Сначала загрузите','err');return}
-status('⏳ Поиск...','load');suggestList.innerHTML='<div class="item" style="color:#888;justify-content:center">⏳</div>';suggestList.classList.add('show');
-const r=await omdbSearch(q);if(r.length){suggestList.innerHTML='';r.forEach(i=>{const d=document.createElement('div');d.className='item';d.innerHTML=`<span>${i.Title}</span><span class="year">${i.Year||'—'}</span>`;d.onclick=()=>{guessIn.value=i.Title;suggestList.classList.remove('show');guess()};suggestList.appendChild(d)});status(`🔍 ${r.length} вариантов`,'ok')}else{suggestList.innerHTML='<div class="item" style="color:#888;justify-content:center">❌ Ничего</div>';status('❌ Ничего не найдено','err')}
-}
-function skip(){
-if(loading||!film.data||guessed)return;const name=film.data.nameRu||film.data.nameEn||film.omdb?.Title||'Без названия';showTitle(name,true);guessed=true;addAttempt();
-if(conn)broadcastGuess(true,name);else chatAdd(`⏭️ пропустил. Это "${name}"`,myName)
-status(`⏭️ Это "${name}"`,'ok');guessIn.disabled=true;if(isHost&&conn)broadcast()
-}
-document.onclick=e=>{if(!suggestList.contains(e.target)&&e.target!==document.querySelector('.guess-area .hint')&&e.target!==guessIn)suggestList.classList.remove('show')}
-guessIn.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();if(suggestList.classList.contains('show')){const f=suggestList.querySelector('.item');if(f){guessIn.value=f.querySelector('span').textContent;suggestList.classList.remove('show');guess()}}else guess()}}
+        function saveKeys() {
+            if (omdbKey.value.trim()) localStorage.setItem('omdb', omdbKey.value.trim());
+            if (kpKey.value.trim()) localStorage.setItem('kp', kpKey.value.trim());
+        }
+        omdbKey.onchange = saveKeys;
+        kpKey.onchange = saveKeys;
 
-// ============================================================
-//  МУЛЬТИПЛЕЕР (PeerJS)
-// ============================================================
-function updateOnline(){const c=Object.keys(players).length;onlineCount.textContent=`👤 ${c}`}
+        testBtn.onclick = async function() {
+            const o = getOmdb(),
+                k = getKp();
+            if (!o || !k) { keyStatus.textContent = '❌ Введите оба ключа'; return; }
+            keyStatus.textContent = '⏳ Проверка...';
+            try {
+                const r1 = await fetch(OMDB + '?apikey=' + o + '&t=Inception');
+                const d1 = await r1.json();
+                if (d1.Response === 'False') { keyStatus.textContent = '❌ OMDb не работает'; return; }
+                const r2 = await fetch(KP + '/v2.2/films/301', { headers: { 'X-API-KEY': k } });
+                if (!r2.ok) { keyStatus.textContent = '❌ KP не работает'; return; }
+                keyStatus.textContent = '✅ Ключи работают!';
+                feedback.textContent = '✅ Ключи работают!';
+                feedback.className = 'feedback success';
+            } catch (e) { keyStatus.textContent = '❌ Ошибка: ' + e.message; }
+        };
 
-function setupConn(c,inc=false){
-conn=c;
-c.on('open',()=>{
-connStat('✅ Подключен','green');roomInfo.innerHTML=`🏠 Комната <strong>${room}</strong>`;leaveBtn.style.display='inline-block';chatIn.disabled=false;chatSend.disabled=false;
-if(!inc){c.send({type:'join',name:myName,pid:peer.id})}
-chatAdd('👋 Вы вошли как '+myName,'',true);status('✅ Подключено!','ok');
-if(isHost&&film.data){setTimeout(broadcast,500)}
-});
-c.on('data',d=>{
-if(d.type==='join'){players[d.pid]={name:d.name,guessed:false};updateOnline();chatAdd(`👤 ${d.name} присоединился`,'',true);if(isHost&&film.data)broadcast()}
-else if(d.type==='player_left'){delete players[d.pid];updateOnline();chatAdd(`👤 ${d.name} покинул`,'',true)}
-else if(d.type==='guess'){if(d.guessed){players[d.pid].guessed=true;chatAdd(`🎯 ${d.name} угадал!`,'',true);checkAll()}else chatAdd(`❌ ${d.name}: ${d.guess}`,'')}
-else if(d.type==='chat'){chatAdd(`💬 ${d.message}`,d.name)}
-else if(d.type==='state'&&!isHost){const s=d.gameState;film=s.film;guessed=s.guessed;showMeta(film.omdb?.Year||film.data?.year,film.omdb?.Genre||(film.data?.genres?film.data.genres.map(g=>g.genre).join(', '):'—'),film.omdb?.Runtime||(film.data?.filmLength?film.data.filmLength+' мин':'—'),'—','—');if(guessed){showTitle(film.data.nameRu||film.data.nameEn||film.omdb?.Title||'Без названия',true);guessIn.disabled=true;status('🎯 Уже угадан','ok')}else if(film.id){kpFrames(film.id).then(f=>showFrames(f))}}
-else if(d.type==='game_over'){chatAdd(`🏆 ${d.winner} угадал!`,'',true)}
-else if(d.type==='new_game'&&!isHost){film={id:null,data:null,omdb:null};guessed=false;showFrames([]);showTitle('???');showMeta();resetHints();guessIn.disabled=false;status('🎬 Новый раунд!','ok')}
-});
-c.on('close',()=>{connStat('⛔ Отключен','red');chatAdd('🔌 Разорвано','',true);status('❌ Отключено','err');if(!isHost)leaveRoom()});
-c.on('error',e=>console.error('Conn error:',e));
-}
+        // ---------- API ----------
+        async function kpSearch(title) {
+            const k = getKp();
+            if (!k) return null;
+            try {
+                const r = await fetch(KP + '/v2.1/films/search-by-keyword?keyword=' + encodeURIComponent(title), { headers: { 'X-API-KEY': k } });
+                const d = await r.json();
+                if (d.films && d.films.length) return d.films.find(f => f.filmId) || d.films[0];
+                return null;
+            } catch (e) { return null; }
+        }
 
-function broadcast(){if(!conn||!isHost)return;conn.send({type:'state',gameState:{film:film,guessed:guessed}})}
-function broadcastGuess(g,t){if(!conn)return;conn.send({type:'guess',name:myName,pid:peer.id,guessed:g,guess:t});if(g){players[peer.id].guessed=true;chatAdd(`🎯 ${myName} угадал!`,'',true);checkAll()}else chatAdd(`❌ ${myName}: ${t}`,'');updateOnline()}
-function broadcastChat(m){if(!conn)return;conn.send({type:'chat',name:myName,pid:peer.id,message:m});chatAdd(`💬 ${m}`,myName)}
-function broadcastNew(){if(!conn||!isHost)return;conn.send({type:'new_game'});Object.keys(players).forEach(id=>players[id].guessed=false);updateOnline()}
-function checkAll(){const all=Object.values(players).every(p=>p.guessed===true);if(all&&Object.keys(players).length>1){chatAdd('🎉 Все угадали!','',true);if(isHost)conn.send({type:'game_over',winner:'Все'})}}
+        async function kpFilm(id) {
+            try {
+                const r = await fetch(KP + '/v2.2/films/' + id, { headers: { 'X-API-KEY': getKp() } });
+                return await r.json();
+            } catch (e) { return null; }
+        }
 
-function sendChat(){const m=chatIn.value.trim();if(!m)return;if(conn){broadcastChat(m)}else{chatAdd(`💬 ${m}`,myName)}chatIn.value=''}
-chatIn.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();sendChat()}}
-chatSend.onclick=sendChat;
+        async function kpFrames(id) {
+            try {
+                const r = await fetch(KP + '/v2.2/films/' + id + '/images', { headers: { 'X-API-KEY': getKp() } });
+                const d = await r.json();
+                if (!d.items) return [];
+                let f = d.items.filter(i => ['SCREENSHOT', 'FRAME', 'STILL', 'SHOT'].includes((i.type || '').toUpperCase()))
+                    .map(i => i.imageUrl).filter(u => u);
+                if (f.length) return f;
+                f = d.items.filter(i => !['POSTER', 'COVER', 'DVD'].includes((i.type || '').toUpperCase()))
+                    .map(i => i.imageUrl).filter(u => u);
+                if (f.length) return f;
+                return d.items.map(i => i.imageUrl).filter(u => u);
+            } catch (e) { return []; }
+        }
 
-// ============================================================
-//  КОМНАТЫ
-// ============================================================
-function generatePass(){pass=String(Math.floor(1000+Math.random()*9000));passDisplay.textContent=pass}
-function setPass(){if(pass){pass='';passDisplay.textContent='нет'}else generatePass()}
+        async function omdbMovie(id) {
+            try {
+                const r = await fetch(OMDB + '?apikey=' + getOmdb() + '&i=tt' + id);
+                const d = await r.json();
+                if (d.Response === 'True') return d;
+                return null;
+            } catch (e) { return null; }
+        }
 
-async function createRoom(){
-myName=pName.value.trim()||'Игрок';if(!getOK()||!getKK()){status('❌ Введите ключи','err');return}
-status('⏳ Создание...','load');
-try{if(peer){peer.destroy();peer=null}
-peer=new Peer(undefined,{debug:2,config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]}});
-peer.on('open',id=>{room=id.slice(0,8);rCode.value=room;isHost=true;connStat('✅ Хост','green');roomInfo.innerHTML=`🏠 Код: <strong>${room}</strong> ${pass?'🔐':'🔓'}`;leaveBtn.style.display='inline-block';chatIn.disabled=false;chatSend.disabled=false;players={};players[peer.id]={name:myName,guessed:false};updateOnline();chatAdd(`🎉 Комната ${room} создана!`,'',true);chatAdd(`👋 Вы ${myName}`,'',true);loadFilm('random');status(`✅ Комната ${room} готова`,'ok')});
-peer.on('connection',c=>setupConn(c,true));
-peer.on('error',e=>{console.error(e);status(`❌ ${e.message}`,'err')});
-}catch(e){status(`❌ ${e.message}`,'err')}
-}
+        async function omdbSearch(q) {
+            try {
+                const r = await fetch(OMDB + '?apikey=' + getOmdb() + '&s=' + encodeURIComponent(q) + '&type=movie');
+                const d = await r.json();
+                if (d.Response === 'True' && d.Search) return d.Search.slice(0, 5);
+                return [];
+            } catch (e) { return []; }
+        }
 
-async function joinRoom(){
-myName=pName.value.trim()||'Игрок';const code=rCode.value.trim();if(!code){status('❌ Введите код','err');return}if(!getOK()||!getKK()){status('❌ Введите ключи','err');return}
-status('⏳ Подключение...','load');connStat('⏳ Подключение...','yellow');
-try{if(peer){peer.destroy();peer=null}
-peer=new Peer(undefined,{debug:2,config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]}});
-peer.on('open',id=>{isHost=false;const c=peer.connect(code,{reliable:true});if(c){setupConn(c,false);players[peer.id]={name:myName,guessed:false};updateOnline()}else{status('❌ Не удалось','err');connStat('⛔ Ошибка','red')}});
-peer.on('error',e=>{console.error(e);if(e.type==='peer-unavailable'){status(`❌ Комната "${code}" не найдена`,'err')}else if(e.type==='invalid-id'){status('❌ Неверный код','err')}else{status(`❌ ${e.message}`,'err')};connStat('⛔ Ошибка','red')});
-setTimeout(()=>{if(!conn){status('❌ Таймаут','err');connStat('⛔ Таймаут','red');if(peer)peer.destroy()}},15000);
-}catch(e){status(`❌ ${e.message}`,'err')}
-}
+        function randImdb() {
+            return String(Math.floor(Math.random() * 20000000) + 1).padStart(7, '0');
+        }
 
-function leaveRoom(){
-if(conn){try{conn.send({type:'player_left',name:myName,pid:peer?.id||'unknown'});conn.close()}catch(e){}}
-if(peer){try{peer.destroy()}catch(e){}}
-isHost=false;conn=null;peer=null;players={};updateOnline();
-leaveBtn.style.display='none';chatIn.disabled=true;chatSend.disabled=true;roomInfo.innerHTML='💡 Создайте комнату';connStat('⛔ Не подключен','red');
-chatAdd('🔌 Вы вышли','',true);status('💡 Вы вышли','ok')
-}
+        // ---------- ИГРА ----------
+        function showFilm(data, omdbData) {
+            if (!data) {
+                titleDisplay.className = 'hidden-title';
+                titleDisplay.textContent = '???';
+                fYear.textContent = '📅 —';
+                fGenre.textContent = '🎭 —';
+                fRuntime.textContent = '⏱️ —';
+                fRating.textContent = '⭐ —';
+                fDirector.textContent = '🎬 —';
+                ['hRating', 'hYear', 'hDirector'].forEach(id => { $(id).disabled = true;
+                    $(id).textContent = $(id).textContent.replace(/✅/g, '').trim() || $(id).textContent; });
+                return;
+            }
+            fYear.textContent = '📅 ' + (omdbData?.Year || data.year || '—');
+            fGenre.textContent = '🎭 ' + (omdbData?.Genre || (data.genres ? data.genres.map(g => g.genre).join(', ') : '—'));
+            fRuntime.textContent = '⏱️ ' + (omdbData?.Runtime || (data.filmLength ? data.filmLength + ' мин' : '—'));
+            fRating.textContent = '⭐ —';
+            fDirector.textContent = '🎬 —';
+            titleDisplay.className = 'hidden-title';
+            titleDisplay.textContent = '???';
+            hints = { r: false, y: false, d: false };
+            ['hRating', 'hYear', 'hDirector'].forEach(id => { $(id).disabled = false;
+                $(id).textContent = $(id).textContent.replace(/✅/g, '').trim() || $(id).textContent; });
+            hRating.textContent = '⭐ Рейтинг';
+            hYear.textContent = '📅 Год';
+            hDirector.textContent = '🎬 Режиссёр';
+        }
 
-// ============================================================
-//  ИНИЦИАЛИЗАЦИЯ
-// ============================================================
-loadStats();
-const o=localStorage.getItem('omdb'), k=localStorage.getItem('kp');
-if(o)omdbKey.value=o;if(k)kpKey.value=k;
-setTimeout(()=>{if(getOK()&&getKK())testKeys()},600);
-status('💡 Введите ключи, создайте комнату','ok');
-connStat('⛔ Не подключен','red');
+        function showFrames(imgs) {
+            frames.innerHTML = '';
+            if (!imgs || !imgs.length) {
+                for (let i = 0; i < 3; i++) {
+                    const c = document.createElement('div');
+                    c.className = 'frame-card';
+                    c.innerHTML = '<div class="no-image">🖼️ Кадр не найден</div>';
+                    frames.appendChild(c);
+                }
+                return;
+            }
+            const s = imgs.slice(0, 3);
+            while (s.length < 3) s.push(null);
+            s.forEach(u => {
+                const c = document.createElement('div');
+                c.className = 'frame-card';
+                if (u) {
+                    const img = document.createElement('img');
+                    img.src = u;
+                    img.onerror = function() { this.style.display = 'none';
+                        c.innerHTML = '<div class="no-image">❌ Ошибка</div>'; };
+                    c.appendChild(img);
+                } else {
+                    c.innerHTML = '<div class="no-image">🖼️ Нет кадра</div>';
+                }
+                frames.appendChild(c);
+            });
+        }
 
-// Список комнат через PeerJS не реализуем (PeerJS не поддерживает листинг)
-// Вместо этого показываем подсказку
-roomsList.innerHTML='<div style="padding:12px;color:#888;text-align:center;font-size:13px">🔗 Введите код комнаты для подключения</div>';
-</script>
+        function revealTitle(name) {
+            titleDisplay.className = 'revealed-title';
+            titleDisplay.textContent = name;
+        }
+
+        function revealHint(type) {
+            if (!film || guessed) return;
+            const map = {
+                r: { el: hRating, key: 'rating', label: 'Рейтинг', val: omdb?.imdbRating || '—', field: fRating },
+                y: { el: hYear, key: 'year', label: 'Год', val: omdb?.Year || film?.year || '—', field: fYear },
+                d: { el: hDirector, key: 'director', label: 'Режиссёр', val: omdb?.Director || '—', field: fDirector }
+            };
+            const h = map[type];
+            if (hints[type]) return;
+            hints[type] = true;
+            h.field.textContent = (h.key === 'year' ? '📅 ' : h.key === 'rating' ? '⭐ ' : '🎬 ') + h.val;
+            h.el.textContent = '✅ ' + h.label;
+            h.el.className = 'active';
+        }
+
+        hRating.onclick = () => revealHint('r');
+        hYear.onclick = () => revealHint('y');
+        hDirector.onclick = () => revealHint('d');
+
+        async function loadFilm(mode) {
+            const o = getOmdb(),
+                k = getKp();
+            if (!o || !k) { feedback.textContent = '❌ Введите API ключи';
+                feedback.className = 'feedback error'; return; }
+            if (loading) return;
+            loading = true;
+            guessed = false;
+            easyMode = mode === 'easy';
+            feedback.textContent = '⏳ Загрузка...';
+            feedback.className = 'feedback loading';
+            guessInput.disabled = true;
+            guessBtn.disabled = true;
+            showFilm(null, null);
+            frames.innerHTML =
+                '<div class="frame-card"><div class="no-image">⏳ Загрузка...</div></div>'.repeat(3);
+
+            try {
+                let movie = null,
+                    omdbData = null,
+                    id = null;
+                if (easyMode) {
+                    let found = null;
+                    for (let i = 0; i < 5 && !found; i++) {
+                        if (usedWords.length >= WORDS.length) usedWords = [];
+                        const avail = WORDS.filter(w => !usedWords.includes(w));
+                        const w = avail.length ? avail[Math.floor(Math.random() * avail.length)] : WORDS[Math.floor(Math
+                        .random() * WORDS.length)];
+                        usedWords.push(w);
+                        const s = await kpSearch(w);
+                        if (s && s.filmId) {
+                            const fr = await kpFrames(s.filmId);
+                            if (fr.length) { found = s; }
+                        }
+                    }
+                    if (!found) { feedback.textContent = '❌ Не найден';
+                        feedback.className = 'feedback error';
+                        loading = false;
+                        guessInput.disabled = false;
+                        guessBtn.disabled = false; return; }
+                    id = found.filmId;
+                    movie = await kpFilm(id);
+                    const r = await fetch(OMDB + '?apikey=' + o + '&t=' + encodeURIComponent(found.nameRu || found.nameEn));
+                    const d = await r.json();
+                    if (d.Response === 'True') omdbData = d;
+                } else {
+                    let found = false;
+                    for (let i = 0; i < 10 && !found; i++) {
+                        const imdb = randImdb();
+                        const m = await omdbMovie(imdb);
+                        if (m) {
+                            const s = await kpSearch(m.Title);
+                            if (s && s.filmId) {
+                                const fr = await kpFrames(s.filmId);
+                                if (fr.length) {
+                                    id = s.filmId;
+                                    movie = await kpFilm(id);
+                                    omdbData = m;
+                                    found = true;
+                                }
+                            }
+                        }
+                    }
+                    if (!found) { feedback.textContent = '❌ Не найден';
+                        feedback.className = 'feedback error';
+                        loading = false;
+                        guessInput.disabled = false;
+                        guessBtn.disabled = false; return; }
+                }
+
+                film = movie;
+                filmId = id;
+                omdb = omdbData;
+                showFilm(movie, omdbData);
+                const fr = await kpFrames(id);
+                if (fr.length) { showFrames(fr);
+                    feedback.textContent = '🎬 Какой фильм? (' + Math.min(fr.length, 3) + ' кадров)';
+                    feedback.className = 'feedback info'; } else { showFrames([]);
+                    feedback.textContent = '🖼️ Кадры не найдены';
+                    feedback.className = 'feedback error'; }
+
+                // Синхронизация с комнатой
+                if (connected) syncState();
+
+            } catch (e) { feedback.textContent = '❌ ' + e.message;
+                feedback.className = 'feedback error'; }
+            loading = false;
+            guessInput.disabled = false;
+            guessBtn.disabled = false;
+            guessInput.focus();
+        }
+
+        newBtn.onclick = () => loadFilm('random');
+        easyBtn.onclick = () => loadFilm('easy');
+
+        // ---------- УГАДЫВАНИЕ ----------
+        async function handleGuess() {
+            if (loading || !film) { feedback.textContent = '❌ Сначала загрузите фильм';
+                feedback.className = 'feedback error'; return; }
+            if (guessed) { feedback.textContent = '✅ Вы уже угадали!';
+                feedback.className = 'feedback success'; return; }
+            const g = guessInput.value.trim();
+            if (!g) { feedback.textContent = '✏️ Введите название';
+                feedback.className = 'feedback error'; return; }
+            suggestList.classList.remove('show');
+
+            const name = film.nameRu || film.nameEn || omdb?.Title || '';
+            const en = film.nameEn || omdb?.Title || '';
+            const gl = g.toLowerCase().trim(),
+                nl = name.toLowerCase().trim(),
+                enl = en.toLowerCase().trim();
+            const ok = gl === nl || gl === enl || nl.includes(gl) || gl.includes(nl) || (enl && enl.includes(gl));
+
+            addAttempt();
+            if (ok) {
+                guessed = true;
+                addWin();
+                revealTitle(name);
+                feedback.textContent = '🎉 Правильно! "' + name + '"!';
+                feedback.className = 'feedback success';
+                guessInput.disabled = true;
+                guessBtn.disabled = true;
+                if (connected) { broadcast('guess', { name: myName, guess: g, win: true });
+                    addChat('🎯 <strong>' + myName + '</strong> угадал!', 'system'); }
+            } else {
+                addError();
+                feedback.textContent = '❌ Не угадал. Ошибок: ' + stats.e;
+                feedback.className = 'feedback error';
+                guessInput.value = '';
+                guessInput.focus();
+                if (connected) { broadcast('guess', { name: myName, guess: g, win: false });
+                    addChat('❌ <strong>' + myName + '</strong>: ' + g + ' — не угадал', ''); }
+            }
+            if (connected) syncState();
+        }
+
+        guessBtn.onclick = handleGuess;
+        guessInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault();
+                handleGuess(); } });
+
+        // ---------- ПОДБОР ----------
+        suggestBtn.onclick = async function() {
+            const q = guessInput.value.trim();
+            if (!q) { feedback.textContent = '✏️ Введите слово';
+                feedback.className = 'feedback error'; return; }
+            if (!film) { feedback.textContent = '❌ Сначала загрузите фильм';
+                feedback.className = 'feedback error'; return; }
+            suggestList.innerHTML = '<div class="item" style="color:#888;justify-content:center;">⏳ Загрузка...</div>';
+            suggestList.classList.add('show');
+            const res = await omdbSearch(q);
+            if (res.length) {
+                suggestList.innerHTML = '';
+                res.forEach(item => {
+                    const d = document.createElement('div');
+                    d.className = 'item';
+                    d.innerHTML =
+                        '<span class="title">' + item.Title + '</span><span class="year">' + (item.Year || '—') +
+                        '</span>';
+                    d.onclick = () => { guessInput.value = item.Title;
+                        suggestList.classList.remove('show');
+                        handleGuess(); };
+                    suggestList.appendChild(d);
+                });
+                feedback.textContent = '🔍 ' + res.length + ' вариантов. Выберите.';
+                feedback.className = 'feedback info';
+            } else {
+                suggestList.innerHTML = '<div class="item" style="color:#888;justify-content:center;">❌ Ничего не найдено</div>';
+                feedback.textContent = '❌ Ничего не найдено';
+                feedback.className = 'feedback error';
+            }
+        };
+
+        document.addEventListener('click', e => {
+            if (!suggestList.contains(e.target) && e.target !== suggestBtn && e.target !== guessInput) {
+                suggestList.classList.remove('show');
+            }
+        });
+
+        // ---------- ПРОПУСК ----------
+        skipBtn.onclick = function() {
+            if (!film || guessed) return;
+            const name = film.nameRu || film.nameEn || omdb?.Title || 'Без названия';
+            revealTitle(name);
+            guessed = true;
+            addAttempt();
+            feedback.textContent = '⏭️ Это был "' + name + '"';
+            feedback.className = 'feedback info';
+            guessInput.disabled = true;
+            guessBtn.disabled = true;
+            if (connected) { broadcast('skip', { name: myName, title: name });
+                addChat('⏭️ <strong>' + myName + '</strong> пропустил. Это был "' + name + '"', 'system'); }
+            if (connected) syncState();
+        };
+
+        // ============================================================
+        //  МУЛЬТИПЛЕЕР — ЧЕРЕЗ BROADCAST CHANNEL + LOCALSTORAGE
+        // ============================================================
+        function getRoomKey() { return 'room_' + room; }
+
+        function syncState() {
+            if (!room || !connected) return;
+            const data = {
+                film: film,
+                omdb: omdb,
+                filmId: filmId,
+                guessed: guessed,
+                players: players,
+                host: isHost ? myId : null
+            };
+            try {
+                localStorage.setItem(getRoomKey(), JSON.stringify(data));
+                // Отправляем через BroadcastChannel
+                if (channel) channel.postMessage({ type: 'sync', data: data, from: myId });
+            } catch (e) {}
+        }
+
+        function broadcast(type, data) {
+            if (!channel) return;
+            channel.postMessage({ type: type, data: data, from: myId, name: myName });
+        }
+
+        function loadState() {
+            if (!room) return;
+            try {
+                const raw = localStorage.getItem(getRoomKey());
+                if (!raw) return;
+                const data = JSON.parse(raw);
+                // Проверяем, что данные от хоста (не свои)
+                if (data.host && data.host !== myId) {
+                    // Обновляем состояние игры
+                    if (data.film && data.filmId) {
+                        film = data.film;
+                        omdb = data.omdb;
+                        filmId = data.filmId;
+                        guessed = data.guessed || false;
+                        showFilm(film, omdb);
+                        if (guessed) {
+                            const name = film.nameRu || film.nameEn || omdb?.Title || 'Без названия';
+                            revealTitle(name);
+                            guessInput.disabled = true;
+                            guessBtn.disabled = true;
+                            feedback.textContent = '🎯 Фильм уже угадан!';
+                            feedback.className = 'feedback success';
+                        } else {
+                            kpFrames(filmId).then(fr => { if (fr.length) showFrames(fr); });
+                            guessInput.disabled = false;
+                            guessBtn.disabled = false;
+                        }
+                    }
+                    if (data.players) {
+                        players = data.players;
+                        // Добавляем себя, если нас нет
+                        if (!players[myId]) players[myId] = { name: myName, guessed: guessed };
+                        updateOnline();
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function setupChannel() {
+            if (!room) return;
+            try {
+                if (channel) channel.close();
+                channel = new BroadcastChannel('movie_game_' + room);
+                channel.onmessage = (e) => {
+                    const msg = e.data;
+                    if (msg.from === myId) return; // Свои сообщения игнорируем
+
+                    switch (msg.type) {
+                        case 'sync':
+                            // Обновляем состояние от хоста
+                            if (msg.data && msg.data.host) {
+                                const d = msg.data;
+                                if (d.film && d.filmId) {
+                                    film = d.film;
+                                    omdb = d.omdb;
+                                    filmId = d.filmId;
+                                    guessed = d.guessed || false;
+                                    showFilm(film, omdb);
+                                    if (guessed) {
+                                        const name = film.nameRu || film.nameEn || omdb?.Title || 'Без названия';
+                                        revealTitle(name);
+                                        guessInput.disabled = true;
+                                        guessBtn.disabled = true;
+                                    } else {
+                                        kpFrames(filmId).then(fr => { if (fr.length) showFrames(fr); });
+                                        guessInput.disabled = false;
+                                        guessBtn.disabled = false;
+                                    }
+                                }
+                                if (d.players) {
+                                    players = d.players;
+                                    if (!players[myId]) players[myId] = { name: myName, guessed: guessed };
+                                    updateOnline();
+                                }
+                                // Сохраняем в localStorage для новых подключений
+                                localStorage.setItem(getRoomKey(), JSON.stringify(d));
+                            }
+                            break;
+
+                        case 'guess':
+                            if (msg.data) {
+                                if (msg.data.win) {
+                                    addChat('🎯 <strong>' + msg.data.name + '</strong> угадал!', 'system');
+                                    if (msg.data.name !== myName) {
+                                        // Если кто-то другой угадал, блокируем угадывание для всех
+                                        guessed = true;
+                                        const name = film?.nameRu || film?.nameEn || omdb?.Title || 'Без названия';
+                                        revealTitle(name);
+                                        guessInput.disabled = true;
+                                        guessBtn.disabled = true;
+                                        feedback.textContent = '🎯 ' + msg.data.name + ' угадал!';
+                                        feedback.className = 'feedback success';
+                                    }
+                                } else {
+                                    addChat('❌ <strong>' + msg.data.name + '</strong>: ' + msg.data.guess + ' — не угадал',
+                                    '');
+                                }
+                            }
+                            break;
+
+                        case 'skip':
+                            if (msg.data) {
+                                addChat('⏭️ <strong>' + msg.data.name + '</strong> пропустил. Это был "' + msg.data.title +
+                                    '"', 'system');
+                                // Если кто-то пропустил, показываем название
+                                if (msg.data.name !== myName && film) {
+                                    const name = film.nameRu || film.nameEn || omdb?.Title || 'Без названия';
+                                    revealTitle(name);
+                                    guessed = true;
+                                    guessInput.disabled = true;
+                                    guessBtn.disabled = true;
+                                    feedback.textContent = '⏭️ ' + msg.data.name + ' пропустил. Это "' + name + '"';
+                                    feedback.className = 'feedback info';
+                                }
+                            }
+                            break;
+
+                        case 'chat':
+                            if (msg.data) {
+                                addChat('💬 <strong>' + msg.data.name + '</strong>: ' + msg.data.message, '');
+                            }
+                            break;
+
+                        case 'join':
+                            if (msg.data) {
+                                // Добавляем игрока в список
+                                if (msg.data.id && msg.data.id !== myId) {
+                                    players[msg.data.id] = { name: msg.data.name, guessed: false };
+                                    updateOnline();
+                                    addChat('👤 <strong>' + msg.data.name + '</strong> присоединился', 'system');
+                                    // Если хост, отправляем текущее состояние
+                                    if (isHost) {
+                                        setTimeout(syncState, 300);
+                                    }
+                                }
+                            }
+                            break;
+
+                        case 'leave':
+                            if (msg.data) {
+                                delete players[msg.data.id];
+                                updateOnline();
+                                addChat('👤 <strong>' + msg.data.name + '</strong> покинул комнату', 'system');
+                            }
+                            break;
+                    }
+                };
+                // Отправляем сообщение о подключении
+                setTimeout(() => {
+                    broadcast('join', { id: myId, name: myName });
+                    // Загружаем состояние
+                    loadState();
+                    // Если хост, синхронизируем состояние
+                    if (isHost) setTimeout(syncState, 500);
+                }, 300);
+            } catch (e) {
+                console.error('Channel error:', e);
+            }
+        }
+
+        // ---------- УПРАВЛЕНИЕ КОМНАТОЙ ----------
+        function setRoom(code, host = false) {
+            room = code;
+            isHost = host;
+            connected = true;
+            roomCodeDisplay.textContent = code;
+            roomDisplay.style.display = 'inline-flex';
+            statusDot.className = 'status-dot online';
+            createBtn.style.display = 'none';
+            joinBtn.style.display = 'none';
+            leaveBtn.style.display = 'inline-block';
+            chatInput.disabled = false;
+            chatSend.disabled = false;
+            roomInfo.innerHTML = '🏠 Комната: <strong>' + code + '</strong> ' + (host ? '(Вы хост)' : '(Вы гость)');
+            feedback.textContent = '✅ Подключено к комнате ' + code;
+            feedback.className = 'feedback success';
+
+            // Инициализируем игроков
+            if (host) {
+                players = {};
+                players[myId] = { name: myName, guessed: false };
+                updateOnline();
+                addChat('🎉 Комната ' + code + ' создана!', 'system');
+                addChat('👋 Вы хост: <strong>' + myName + '</strong>', 'system');
+                // Загружаем фильм
+                setTimeout(() => loadFilm('random'), 500);
+            } else {
+                // Гость — ждём данные от хоста
+                addChat('👋 Вы вошли как <strong>' + myName + '</strong>', 'system');
+                addChat('⏳ Ожидание данных от хоста...', 'system');
+                // Загружаем состояние через 1 секунду
+                setTimeout(loadState, 1000);
+                // Если через 3 секунды нет данных, пробуем ещё раз
+                setTimeout(loadState, 3000);
+            }
+
+            setupChannel();
+            // Сохраняем комнату в localStorage
+            localStorage.setItem('last_room', code);
+        }
+
+        function leaveRoom() {
+            if (channel) {
+                broadcast('leave', { id: myId, name: myName });
+                try { channel.close(); } catch (e) {}
+                channel = null;
+            }
+            connected = false;
+            isHost = false;
+            room = null;
+            players = {};
+            roomCodeDisplay.textContent = '----';
+            statusDot.className = 'status-dot offline';
+            createBtn.style.display = 'inline-block';
+            joinBtn.style.display = 'inline-block';
+            leaveBtn.style.display = 'none';
+            chatInput.disabled = true;
+            chatSend.disabled = true;
+            roomInfo.innerHTML = '💡 Создайте комнату (4 цифры)';
+            feedback.textContent = '💡 Вы покинули комнату';
+            feedback.className = 'feedback info';
+            updateOnline();
+            addChat('🔌 Вы покинули комнату', 'system');
+            try { localStorage.removeItem(getRoomKey()); } catch (e) {}
+        }
+
+        createBtn.onclick = function() {
+            const code = roomInput.value.trim();
+            if (!code || !/^\d{4}$/.test(code)) {
+                feedback.textContent = '❌ Введите 4 цифры';
+                feedback.className = 'feedback error';
+                return;
+            }
+            if (!getOmdb() || !getKp()) {
+                feedback.textContent = '❌ Введите API ключи';
+                feedback.className = 'feedback error';
+                return;
+            }
+            // Проверяем, нет ли уже такой комнаты
+            try {
+                const existing = localStorage.getItem('room_' + code);
+                if (existing) {
+                    feedback.textContent = '⚠️ Комната существует. Войдите как гость.';
+                    feedback.className = 'feedback error';
+                    return;
+                }
+            } catch (e) {}
+            setRoom(code, true);
+        };
+
+        joinBtn.onclick = function() {
+            const code = roomInput.value.trim();
+            if (!code || !/^\d{4}$/.test(code)) {
+                feedback.textContent = '❌ Введите 4 цифры';
+                feedback.className = 'feedback error';
+                return;
+            }
+            if (!getOmdb() || !getKp()) {
+                feedback.textContent = '❌ Введите API ключи';
+                feedback.className = 'feedback error';
+                return;
+            }
+            // Проверяем, существует ли комната
+            try {
+                const existing = localStorage.getItem('room_' + code);
+                if (!existing) {
+                    feedback.textContent = '❌ Комната не найдена. Создайте её.';
+                    feedback.className = 'feedback error';
+                    return;
+                }
+            } catch (e) {}
+            setRoom(code, false);
+        };
+
+        leaveBtn.onclick = leaveRoom;
+
+        // Ввод только цифр
+        roomInput.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '').slice(0, 4);
+        });
+
+        // Автоматическая проверка ключей при старте
+        setTimeout(() => {
+            if (getOmdb() && getKp()) {
+                testBtn.click();
+            }
+            // Восстанавливаем последнюю комнату
+            const last = localStorage.getItem('last_room');
+            if (last) {
+                roomInput.value = last;
+                // Не подключаемся автоматически, чтобы не создавать конфликтов
+            }
+        }, 500);
+
+        // ---------- ЧАТ ----------
+        chatSend.onclick = function() {
+            const msg = chatInput.value.trim();
+            if (!msg || !connected) return;
+            broadcast('chat', { name: myName, message: msg });
+            addChat('💬 <strong>' + myName + '</strong>: ' + msg, '');
+            chatInput.value = '';
+        };
+
+        chatInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && this.value.trim() && connected) {
+                e.preventDefault();
+                chatSend.click();
+            }
+        });
+
+        // ---------- ИНИЦИАЛИЗАЦИЯ ----------
+        // Восстанавливаем имя
+        try { myName = localStorage.getItem('player_name') || 'Игрок' + Math.floor(Math.random() * 100); } catch (e) {}
+        // Сохраняем имя
+        setInterval(() => { try { localStorage.setItem('player_name', myName); } catch (e) {} }, 5000);
+
+        // Проверка наличия ключей при загрузке
+        if (localStorage.getItem('omdb')) omdbKey.value = localStorage.getItem('omdb');
+        if (localStorage.getItem('kp')) kpKey.value = localStorage.getItem('kp');
+
+        console.log('🎬 Угадай фильм — мультиплеер через BroadcastChannel');
+        console.log('📌 Код комнаты — 4 цифры');
+        console.log('👤 Ваш ID:', myId);
+        console.log('📝 Ваше имя:', myName);
+    </script>
 </body>
 </html>
