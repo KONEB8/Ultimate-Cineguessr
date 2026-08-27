@@ -913,3 +913,773 @@
                                 const fr = await kpFrames(s.filmId);
                                 if (fr.length) {
                                     id = s.filmId;
+                                    movie = await kpFilm(id);
+                                    omdbData = m;
+                                    // Сохраняем оригинальное название
+                                    if (omdbData && omdbData.Title) {
+                                        movie.originalTitle = omdbData.Title;
+                                    }
+                                    found = true;
+                                }
+                            }
+                        }
+                    }
+                    if (!found) { feedback.textContent = '❌ Не найден';
+                        feedback.className = 'feedback error';
+                        loading = false;
+                        guessInput.disabled = false;
+                        guessBtn.disabled = false; return; }
+                }
+
+                film = movie;
+                filmId = id;
+                omdb = omdbData;
+                // Сохраняем оригинальное название
+                if (omdbData && omdbData.Title) {
+                    film.originalTitle = omdbData.Title;
+                }
+                // Также сохраняем все названия для поиска
+                film.allTitles = [];
+                if (film.nameRu) film.allTitles.push(film.nameRu.toLowerCase().trim());
+                if (film.nameEn) film.allTitles.push(film.nameEn.toLowerCase().trim());
+                if (film.alternativeName) film.allTitles.push(film.alternativeName.toLowerCase().trim());
+                if (omdbData && omdbData.Title) film.allTitles.push(omdbData.Title.toLowerCase().trim());
+
+                showFilm(movie, omdbData);
+                const fr = await kpFrames(id);
+                if (fr.length) { showFrames(fr);
+                    feedback.textContent = '🎬 Какой фильм? (' + Math.min(fr.length, 3) + ' кадров)';
+                    feedback.className = 'feedback info'; } else { showFrames([]);
+                    feedback.textContent = '🖼️ Кадры не найдены';
+                    feedback.className = 'feedback error'; }
+
+                if (isConnected) syncGame();
+
+            } catch (e) { feedback.textContent = '❌ ' + e.message;
+                feedback.className = 'feedback error'; }
+            loading = false;
+            guessInput.disabled = false;
+            guessBtn.disabled = false;
+            guessInput.focus();
+        }
+
+        newBtn.onclick = () => loadFilm('random');
+        easyBtn.onclick = () => loadFilm('easy');
+
+        // ============================================================
+        //  УГАДЫВАНИЕ — ПОЛНОСТЬЮ ПЕРЕПИСАНО
+        // ============================================================
+        function checkGuess(guessText) {
+            if (!film) return false;
+
+            const guess = guessText.toLowerCase().trim();
+            if (!guess) return false;
+
+            // Все возможные названия фильма
+            const titles = [];
+
+            // Основные названия
+            if (film.nameRu) titles.push(film.nameRu.toLowerCase().trim());
+            if (film.nameEn) titles.push(film.nameEn.toLowerCase().trim());
+            if (film.alternativeName) titles.push(film.alternativeName.toLowerCase().trim());
+
+            // Название из OMDb
+            if (omdb && omdb.Title) titles.push(omdb.Title.toLowerCase().trim());
+
+            // Оригинальное название
+            if (film.originalTitle) titles.push(film.originalTitle.toLowerCase().trim());
+
+            // Убираем дубликаты
+            const uniqueTitles = [...new Set(titles)];
+
+            // Проверяем точное совпадение
+            for (const title of uniqueTitles) {
+                if (guess === title) return true;
+            }
+
+            // Проверяем вхождение (частичное совпадение)
+            for (const title of uniqueTitles) {
+                if (title.includes(guess) || guess.includes(title)) {
+                    // Если название длинное и содержит guess, считаем угаданным
+                    if (guess.length >= 3 && title.includes(guess)) return true;
+                    // Если guess длинный и содержит название
+                    if (title.length >= 3 && guess.includes(title)) return true;
+                }
+            }
+
+            // Проверяем по словам (для длинных названий)
+            for (const title of uniqueTitles) {
+                const titleWords = title.split(' ');
+                const guessWords = guess.split(' ');
+                // Если большая часть слов совпадает
+                let matchCount = 0;
+                for (const tw of titleWords) {
+                    if (tw.length < 3) continue;
+                    for (const gw of guessWords) {
+                        if (gw.length < 3) continue;
+                        if (tw === gw || tw.includes(gw) || gw.includes(tw)) {
+                            matchCount++;
+                            break;
+                        }
+                    }
+                }
+                if (matchCount >= Math.min(2, titleWords.length)) return true;
+            }
+
+            return false;
+        }
+
+        function handleGuess() {
+            if (loading || !film) {
+                feedback.textContent = '❌ Сначала загрузите фильм';
+                feedback.className = 'feedback error';
+                return;
+            }
+            if (guessed) {
+                feedback.textContent = '✅ Вы уже угадали!';
+                feedback.className = 'feedback success';
+                return;
+            }
+
+            const guessText = guessInput.value.trim();
+            if (!guessText) {
+                feedback.textContent = '✏️ Введите название';
+                feedback.className = 'feedback error';
+                return;
+            }
+
+            // Закрываем список подсказок
+            suggestList.classList.remove('show');
+
+            const isCorrect = checkGuess(guessText);
+
+            addAttempt();
+
+            // Получаем отображаемое название
+            const displayName = film.nameRu || film.nameEn || omdb?.Title || film.originalTitle || 'Без названия';
+
+            if (isCorrect) {
+                guessed = true;
+                addWin();
+                revealTitle(displayName);
+                feedback.textContent = '🎉 Правильно! "' + displayName + '"!';
+                feedback.className = 'feedback success';
+                guessInput.disabled = true;
+                guessBtn.disabled = true;
+
+                if (isConnected) {
+                    sendToPeer('guess', { name: myName, guess: guessText, win: true });
+                    addChat('🎯 <strong>' + myName + '</strong> угадал!', 'system');
+                    syncGame();
+                }
+            } else {
+                addError();
+                feedback.textContent = '❌ Не угадал. Ошибок: ' + stats.e;
+                feedback.className = 'feedback error';
+                guessInput.value = '';
+                guessInput.focus();
+
+                if (isConnected) {
+                    sendToPeer('guess', { name: myName, guess: guessText, win: false });
+                    addChat('❌ <strong>' + myName + '</strong>: ' + guessText + ' — не угадал', '');
+                }
+            }
+        }
+
+        // Привязываем обработчики
+        guessBtn.onclick = handleGuess;
+
+        guessInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleGuess();
+            }
+        });
+
+        // ============================================================
+        //  ПОДБОР — ПОЛНОСТЬЮ ПЕРЕПИСАН
+        // ============================================================
+        suggestBtn.onclick = async function() {
+            const query = guessInput.value.trim();
+            if (!query) {
+                feedback.textContent = '✏️ Введите слово для поиска';
+                feedback.className = 'feedback error';
+                return;
+            }
+            if (!film) {
+                feedback.textContent = '❌ Сначала загрузите фильм';
+                feedback.className = 'feedback error';
+                return;
+            }
+
+            feedback.textContent = '⏳ Поиск...';
+            feedback.className = 'feedback loading';
+
+            suggestList.innerHTML = '<div class="item" style="color:#888;justify-content:center;">⏳ Загрузка...</div>';
+            suggestList.classList.add('show');
+
+            const results = await omdbSearch(query);
+
+            if (results && results.length > 0) {
+                suggestList.innerHTML = '';
+                results.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'item';
+                    div.innerHTML = `
+                        <span class="title">${item.Title}</span>
+                        <span class="year">${item.Year || '—'}</span>
+                    `;
+                    // Прямой вызов проверки без handleGuess
+                    div.onclick = function() {
+                        const selectedTitle = this.querySelector('.title').textContent;
+                        guessInput.value = selectedTitle;
+                        suggestList.classList.remove('show');
+                        // Проверяем выбранный вариант
+                        const isCorrect = checkGuess(selectedTitle);
+                        addAttempt();
+
+                        const displayName = film.nameRu || film.nameEn || omdb?.Title || film.originalTitle || 'Без названия';
+
+                        if (isCorrect) {
+                            guessed = true;
+                            addWin();
+                            revealTitle(displayName);
+                            feedback.textContent = '🎉 Правильно! "' + displayName + '"!';
+                            feedback.className = 'feedback success';
+                            guessInput.disabled = true;
+                            guessBtn.disabled = true;
+
+                            if (isConnected) {
+                                sendToPeer('guess', { name: myName, guess: selectedTitle, win: true });
+                                addChat('🎯 <strong>' + myName + '</strong> угадал!', 'system');
+                                syncGame();
+                            }
+                        } else {
+                            addError();
+                            feedback.textContent = '❌ Не угадал. Ошибок: ' + stats.e;
+                            feedback.className = 'feedback error';
+                            guessInput.value = '';
+                            guessInput.focus();
+
+                            if (isConnected) {
+                                sendToPeer('guess', { name: myName, guess: selectedTitle, win: false });
+                                addChat('❌ <strong>' + myName + '</strong>: ' + selectedTitle + ' — не угадал', '');
+                            }
+                        }
+                    };
+                    suggestList.appendChild(div);
+                });
+                feedback.textContent = '🔍 Найдено ' + results.length + ' вариантов. Выберите.';
+                feedback.className = 'feedback info';
+            } else {
+                suggestList.innerHTML = '<div class="item" style="color:#888;justify-content:center;">❌ Ничего не найдено</div>';
+                feedback.textContent = '❌ Ничего не найдено. Попробуйте другое слово.';
+                feedback.className = 'feedback error';
+            }
+        };
+
+        // Закрытие списка при клике вне
+        document.addEventListener('click', function(e) {
+            if (!suggestList.contains(e.target) && e.target !== suggestBtn && e.target !== guessInput) {
+                suggestList.classList.remove('show');
+            }
+        });
+
+        // ---------- ПРОПУСК ----------
+        skipBtn.onclick = function() {
+            if (!film || guessed) return;
+            const name = film.nameRu || film.nameEn || omdb?.Title || 'Без названия';
+            revealTitle(name);
+            guessed = true;
+            addAttempt();
+            feedback.textContent = '⏭️ Это был "' + name + '"';
+            feedback.className = 'feedback info';
+            guessInput.disabled = true;
+            guessBtn.disabled = true;
+            if (isConnected) {
+                sendToPeer('skip', { name: myName, title: name });
+                addChat('⏭️ <strong>' + myName + '</strong> пропустил. Это был "' + name + '"', 'system');
+            }
+            if (isConnected) syncGame();
+        };
+
+        // ============================================================
+        //  МУЛЬТИПЛЕЕР — PEERJS (НЕ ТРОГАЕМ, РАБОТАЕТ)
+        // ============================================================
+
+        function syncGame() {
+            if (!isConnected || !conn || !conn.open) return;
+            const data = {
+                film: film,
+                omdb: omdb,
+                filmId: filmId,
+                guessed: guessed,
+                players: players
+            };
+            sendToPeer('sync', data);
+        }
+
+        function sendToPeer(type, data) {
+            if (!conn || !conn.open) return;
+            try {
+                conn.send({ type: type, data: data, from: myId, name: myName });
+            } catch (e) {
+                console.error('Ошибка отправки:', e);
+            }
+        }
+
+        function initPeer() {
+            if (peer) {
+                try { peer.destroy(); } catch (e) {}
+                peer = null;
+            }
+
+            const peerId = isHost ? room : undefined;
+
+            peer = new Peer(peerId, {
+                debug: 0,
+                config: {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' }
+                    ]
+                }
+            });
+
+            if (connectTimeout) clearTimeout(connectTimeout);
+            connectTimeout = setTimeout(() => {
+                if (!isConnected && isConnecting) {
+                    isConnecting = false;
+                    connectStatus.textContent = '❌ Таймаут подключения. Попробуйте ещё раз.';
+                    connectStatus.style.color = '#e74c3c';
+                    feedback.textContent = '❌ Таймаут подключения';
+                    feedback.className = 'feedback error';
+                    if (peer) { try { peer.destroy(); } catch (e) {} }
+                    peer = null;
+                    createBtn.style.display = 'inline-block';
+                    joinBtn.style.display = 'inline-block';
+                    leaveBtn.classList.add('hidden');
+                }
+            }, 10000);
+
+            peer.on('open', (id) => {
+                console.log('Peer открыт:', id);
+                isConnecting = false;
+                if (connectTimeout) clearTimeout(connectTimeout);
+
+                if (isHost) {
+                    const shortId = id.slice(0, 8);
+                    roomCodeDisplay.textContent = shortId;
+                    roomDisplay.style.display = 'inline-flex';
+                    connectStatus.textContent = '✅ Ожидание подключения... Код: ' + shortId;
+                    connectStatus.style.color = '#f39c12';
+                    statusDot.className = 'status-dot waiting';
+                    roomInfo.innerHTML = '🏠 Вы хост. Код: <strong>' + shortId + '</strong>';
+                    feedback.textContent = '✅ Комната создана. Ждите игроков.';
+                    feedback.className = 'feedback success';
+                }
+            });
+
+            peer.on('connection', (c) => {
+                console.log('Входящее подключение от:', c.peer);
+                if (isHost) {
+                    conn = c;
+                    setupConnection(c);
+                }
+            });
+
+            peer.on('error', (err) => {
+                console.error('Peer ошибка:', err);
+                if (isConnecting) {
+                    isConnecting = false;
+                    if (err.type === 'unavailable-id') {
+                        connectStatus.textContent = '❌ Код уже используется. Попробуйте другой.';
+                        connectStatus.style.color = '#e74c3c';
+                        feedback.textContent = '❌ Код занят. Попробуйте другой.';
+                        feedback.className = 'feedback error';
+                    } else if (err.type === 'peer-unavailable') {
+                        connectStatus.textContent = '❌ Комната не найдена. Проверьте код.';
+                        connectStatus.style.color = '#e74c3c';
+                        feedback.textContent = '❌ Комната не найдена.';
+                        feedback.className = 'feedback error';
+                    }
+                    createBtn.style.display = 'inline-block';
+                    joinBtn.style.display = 'inline-block';
+                    leaveBtn.classList.add('hidden');
+                    if (peer) { try { peer.destroy(); } catch (e) {} }
+                    peer = null;
+                }
+            });
+
+            peer.on('disconnected', () => {
+                console.log('Peer отключён');
+                if (isConnected) {
+                    isConnected = false;
+                    statusDot.className = 'status-dot offline';
+                    connectStatus.textContent = '❌ Соединение потеряно';
+                    connectStatus.style.color = '#e74c3c';
+                    addChat('🔌 Соединение потеряно', 'system');
+                }
+            });
+        }
+
+        function setupConnection(c) {
+            conn = c;
+            isConnected = true;
+            isConnecting = false;
+            statusDot.className = 'status-dot online';
+            leaveBtn.classList.remove('hidden');
+            createBtn.style.display = 'none';
+            joinBtn.style.display = 'none';
+            chatInput.disabled = false;
+            chatSend.disabled = false;
+
+            if (!isHost) {
+                roomCodeDisplay.textContent = room;
+                roomDisplay.style.display = 'inline-flex';
+                roomInfo.innerHTML = '🏠 Подключено к комнате <strong>' + room + '</strong>';
+                connectStatus.textContent = '✅ Подключено!';
+                connectStatus.style.color = '#2ecc71';
+                feedback.textContent = '✅ Подключено к комнате ' + room;
+                feedback.className = 'feedback success';
+                addChat('👋 Вы вошли как <strong>' + myName + '</strong>', 'system');
+            } else {
+                addChat('👤 Игрок подключился!', 'system');
+                setTimeout(() => {
+                    players[myId] = { name: myName, guessed: false };
+                    updateOnline();
+                    syncGame();
+                }, 300);
+            }
+
+            c.on('data', (data) => {
+                handlePeerData(data);
+            });
+
+            c.on('close', () => {
+                isConnected = false;
+                statusDot.className = 'status-dot offline';
+                connectStatus.textContent = '❌ Соединение разорвано';
+                connectStatus.style.color = '#e74c3c';
+                addChat('🔌 Соединение разорвано', 'system');
+                feedback.textContent = '❌ Соединение разорвано';
+                feedback.className = 'feedback error';
+                leaveRoom();
+            });
+        }
+
+        function handlePeerData(data) {
+            console.log('Получено:', data);
+
+            switch (data.type) {
+                case 'join':
+                    if (data.data && data.data.id) {
+                        players[data.data.id] = { name: data.data.name, guessed: false };
+                        updateOnline();
+                        addChat('👤 <strong>' + data.data.name + '</strong> присоединился', 'system');
+                        syncGame();
+                    }
+                    break;
+
+                case 'sync':
+                    if (data.data && !isHost) {
+                        const d = data.data;
+                        if (d.film && d.filmId) {
+                            film = d.film;
+                            omdb = d.omdb;
+                            filmId = d.filmId;
+                            guessed = d.guessed || false;
+                            showFilm(film, omdb);
+                            if (guessed) {
+                                const name = film.nameRu || film.nameEn || omdb?.Title || 'Без названия';
+                                revealTitle(name);
+                                guessInput.disabled = true;
+                                guessBtn.disabled = true;
+                                feedback.textContent = '🎯 Фильм уже угадан!';
+                                feedback.className = 'feedback success';
+                            } else {
+                                kpFrames(filmId).then(fr => { if (fr.length) showFrames(fr); });
+                                guessInput.disabled = false;
+                                guessBtn.disabled = false;
+                            }
+                        }
+                        if (d.players) {
+                            players = d.players;
+                            updateOnline();
+                        }
+                    }
+                    break;
+
+                case 'guess':
+                    if (data.data) {
+                        if (data.data.win) {
+                            addChat('🎯 <strong>' + data.data.name + '</strong> угадал!', 'system');
+                            if (data.data.name !== myName) {
+                                guessed = true;
+                                const name = film?.nameRu || film?.nameEn || omdb?.Title || 'Без названия';
+                                revealTitle(name);
+                                guessInput.disabled = true;
+                                guessBtn.disabled = true;
+                                feedback.textContent = '🎯 ' + data.data.name + ' угадал!';
+                                feedback.className = 'feedback success';
+                            }
+                        } else {
+                            addChat('❌ <strong>' + data.data.name + '</strong>: ' + data.data.guess + ' — не угадал', '');
+                        }
+                    }
+                    break;
+
+                case 'skip':
+                    if (data.data) {
+                        addChat('⏭️ <strong>' + data.data.name + '</strong> пропустил. Это был "' + data.data.title + '"',
+                            'system');
+                        if (data.data.name !== myName && film) {
+                            const name = film.nameRu || film.nameEn || omdb?.Title || 'Без названия';
+                            revealTitle(name);
+                            guessed = true;
+                            guessInput.disabled = true;
+                            guessBtn.disabled = true;
+                            feedback.textContent = '⏭️ ' + data.data.name + ' пропустил. Это "' + name + '"';
+                            feedback.className = 'feedback info';
+                        }
+                    }
+                    break;
+
+                case 'chat':
+                    if (data.data) {
+                        addChat('💬 <strong>' + data.data.name + '</strong>: ' + data.data.message, '');
+                    }
+                    break;
+
+                case 'player_left':
+                    if (data.data && data.data.id) {
+                        delete players[data.data.id];
+                        updateOnline();
+                        addChat('👤 <strong>' + data.data.name + '</strong> покинул комнату', 'system');
+                    }
+                    break;
+            }
+        }
+
+        // ---------- УПРАВЛЕНИЕ КОМНАТОЙ ----------
+        function createRoom() {
+            const code = roomInput.value.trim();
+            if (!code || !/^\d{4}$/.test(code)) {
+                feedback.textContent = '❌ Введите 4 цифры';
+                feedback.className = 'feedback error';
+                return;
+            }
+            if (!getOmdb() || !getKp()) {
+                feedback.textContent = '❌ Введите API ключи';
+                feedback.className = 'feedback error';
+                return;
+            }
+
+            room = code;
+            isHost = true;
+            isConnecting = true;
+            players = {};
+            players[myId] = { name: myName, guessed: false };
+            updateOnline();
+
+            roomCodeDisplay.textContent = code;
+            roomDisplay.style.display = 'inline-flex';
+            statusDot.className = 'status-dot waiting';
+            createBtn.style.display = 'none';
+            joinBtn.style.display = 'none';
+            leaveBtn.classList.remove('hidden');
+            chatInput.disabled = true;
+            chatSend.disabled = true;
+            roomInfo.innerHTML = '🏠 Создание комнаты <strong>' + code + '</strong>...';
+            connectStatus.textContent = '⏳ Подключение к серверу...';
+            connectStatus.style.color = '#f39c12';
+            feedback.textContent = '⏳ Создание комнаты...';
+            feedback.className = 'feedback loading';
+
+            initPeer();
+        }
+
+        function joinRoom() {
+            const code = roomInput.value.trim();
+            if (!code || !/^\d{4}$/.test(code)) {
+                feedback.textContent = '❌ Введите 4 цифры';
+                feedback.className = 'feedback error';
+                return;
+            }
+            if (!getOmdb() || !getKp()) {
+                feedback.textContent = '❌ Введите API ключи';
+                feedback.className = 'feedback error';
+                return;
+            }
+
+            room = code;
+            isHost = false;
+            isConnecting = true;
+            players = {};
+            players[myId] = { name: myName, guessed: false };
+            updateOnline();
+
+            roomCodeDisplay.textContent = code;
+            roomDisplay.style.display = 'inline-flex';
+            statusDot.className = 'status-dot waiting';
+            createBtn.style.display = 'none';
+            joinBtn.style.display = 'none';
+            leaveBtn.classList.remove('hidden');
+            chatInput.disabled = true;
+            chatSend.disabled = true;
+            roomInfo.innerHTML = '🏠 Подключение к комнате <strong>' + code + '</strong>...';
+            connectStatus.textContent = '⏳ Подключение...';
+            connectStatus.style.color = '#f39c12';
+            feedback.textContent = '⏳ Подключение к комнате...';
+            feedback.className = 'feedback loading';
+
+            if (peer) {
+                try { peer.destroy(); } catch (e) {}
+                peer = null;
+            }
+
+            peer = new Peer(undefined, {
+                debug: 0,
+                config: {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' }
+                    ]
+                }
+            });
+
+            if (connectTimeout) clearTimeout(connectTimeout);
+            connectTimeout = setTimeout(() => {
+                if (!isConnected && isConnecting) {
+                    isConnecting = false;
+                    connectStatus.textContent = '❌ Таймаут подключения. Проверьте код.';
+                    connectStatus.style.color = '#e74c3c';
+                    feedback.textContent = '❌ Таймаут подключения';
+                    feedback.className = 'feedback error';
+                    createBtn.style.display = 'inline-block';
+                    joinBtn.style.display = 'inline-block';
+                    leaveBtn.classList.add('hidden');
+                    if (peer) { try { peer.destroy(); } catch (e) {} }
+                    peer = null;
+                }
+            }, 10000);
+
+            peer.on('open', (id) => {
+                console.log('Peer открыт:', id);
+                isConnecting = false;
+                if (connectTimeout) clearTimeout(connectTimeout);
+
+                const c = peer.connect(code);
+                if (c) {
+                    conn = c;
+                    setupConnection(c);
+                    c.on('open', () => {
+                        c.send({ type: 'join', data: { id: myId, name: myName } });
+                        setTimeout(() => {
+                            c.send({ type: 'sync', data: { request: true } });
+                        }, 300);
+                    });
+                } else {
+                    connectStatus.textContent = '❌ Не удалось подключиться';
+                    connectStatus.style.color = '#e74c3c';
+                    feedback.textContent = '❌ Не удалось подключиться';
+                    feedback.className = 'feedback error';
+                    leaveRoom();
+                }
+            });
+
+            peer.on('error', (err) => {
+                console.error('Peer ошибка:', err);
+                if (isConnecting) {
+                    isConnecting = false;
+                    if (err.type === 'peer-unavailable') {
+                        connectStatus.textContent = '❌ Комната не найдена. Проверьте код.';
+                        connectStatus.style.color = '#e74c3c';
+                        feedback.textContent = '❌ Комната не найдена';
+                        feedback.className = 'feedback error';
+                    }
+                    createBtn.style.display = 'inline-block';
+                    joinBtn.style.display = 'inline-block';
+                    leaveBtn.classList.add('hidden');
+                    if (peer) { try { peer.destroy(); } catch (e) {} }
+                    peer = null;
+                }
+            });
+        }
+
+        function leaveRoom() {
+            if (conn) {
+                try {
+                    conn.send({ type: 'player_left', data: { id: myId, name: myName } });
+                    conn.close();
+                } catch (e) {}
+                conn = null;
+            }
+            if (peer) {
+                try { peer.destroy(); } catch (e) {}
+                peer = null;
+            }
+
+            isConnected = false;
+            isHost = false;
+            isConnecting = false;
+            room = null;
+            players = {};
+            if (connectTimeout) clearTimeout(connectTimeout);
+
+            roomCodeDisplay.textContent = '----';
+            roomDisplay.style.display = 'none';
+            statusDot.className = 'status-dot offline';
+            createBtn.style.display = 'inline-block';
+            joinBtn.style.display = 'inline-block';
+            leaveBtn.classList.add('hidden');
+            chatInput.disabled = true;
+            chatSend.disabled = true;
+            roomInfo.innerHTML = '💡 Создайте комнату (4 цифры)';
+            connectStatus.textContent = '';
+            feedback.textContent = '💡 Вы покинули комнату';
+            feedback.className = 'feedback info';
+            updateOnline();
+            addChat('🔌 Вы покинули комнату', 'system');
+        }
+
+        createBtn.onclick = createRoom;
+        joinBtn.onclick = joinRoom;
+        leaveBtn.onclick = leaveRoom;
+
+        // Ввод только цифр
+        roomInput.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '').slice(0, 4);
+        });
+
+        // ---------- ЧАТ ----------
+        chatSend.onclick = function() {
+            const msg = chatInput.value.trim();
+            if (!msg || !isConnected) return;
+            sendToPeer('chat', { name: myName, message: msg });
+            addChat('💬 <strong>' + myName + '</strong>: ' + msg, '');
+            chatInput.value = '';
+        };
+
+        chatInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && this.value.trim() && isConnected) {
+                e.preventDefault();
+                chatSend.click();
+            }
+        });
+
+        // ---------- ИНИЦИАЛИЗАЦИЯ ----------
+        if (localStorage.getItem('omdb')) omdbKey.value = localStorage.getItem('omdb');
+        if (localStorage.getItem('kp')) kpKey.value = localStorage.getItem('kp');
+
+        setTimeout(() => {
+            if (getOmdb() && getKp()) testBtn.click();
+        }, 500);
+
+        console.log('🎬 Угадай фильм — мультиплеер через PeerJS');
+        console.log('📌 Код комнаты — 4 цифры');
+        console.log('👤 Ваш ID:', myId);
+        console.log('💡 Если не подключается — попробуйте другой код');
+    </script>
+</body>
+</html>
