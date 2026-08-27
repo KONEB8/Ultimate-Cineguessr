@@ -90,7 +90,7 @@
 
         .input-group input {
             flex: 1;
-            min-width: 140px;
+            min-width: 120px;
             padding: 8px 12px;
             border: 1px solid #d0d4dc;
             border-radius: 8px;
@@ -197,8 +197,13 @@
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.6;
+            }
         }
 
         .quick-actions {
@@ -475,7 +480,6 @@
             color: #e65100;
         }
 
-        /* Чат */
         .chat-container {
             background: white;
             border-radius: 12px;
@@ -513,13 +517,13 @@
         }
 
         .chat-message {
-            padding: 6px 10px;
-            margin-bottom: 4px;
-            border-radius: 8px;
+            padding: 4px 8px;
+            margin-bottom: 3px;
+            border-radius: 6px;
             font-size: 13px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             flex-wrap: wrap;
         }
 
@@ -536,8 +540,11 @@
             color: #ff6b35;
         }
 
-        .chat-message .guess-text {
-            color: #555;
+        .chat-message.system {
+            background: #f8f9fa;
+            color: #666;
+            font-style: italic;
+            font-size: 12px;
         }
 
         .chat-message .badge-guessed {
@@ -564,27 +571,6 @@
             padding: 1px 10px;
             border-radius: 12px;
             font-size: 11px;
-            font-weight: 600;
-        }
-
-        .chat-message .badge-system {
-            background: #e2e3e5;
-            color: #383d41;
-            padding: 1px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .chat-message.system {
-            background: #f8f9fa;
-            color: #666;
-            font-style: italic;
-            font-size: 12px;
-        }
-
-        .chat-message .highlight {
-            color: #ff6b35;
             font-weight: 600;
         }
 
@@ -679,14 +665,6 @@
             margin-left: 10px;
         }
 
-        .suggestions-list .suggestion-item .type {
-            font-size: 10px;
-            background: #e4e6eb;
-            padding: 1px 10px;
-            border-radius: 12px;
-            color: #555;
-        }
-
         .suggestions-list .loading-suggestions {
             padding: 16px;
             text-align: center;
@@ -723,16 +701,57 @@
             border-radius: 4px;
         }
 
+        .connection-status {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .connection-status.online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .connection-status.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .connection-status.connecting {
+            background: #fff3cd;
+            color: #856404;
+        }
+
         @media (max-width: 700px) {
-            body { padding: 12px; }
-            .card { padding: 14px; }
-            .frames-grid { grid-template-columns: 1fr; }
-            .frame-card img { height: 160px; }
-            .input-group input { min-width: 100px; }
-            .guess-area { flex-direction: column; }
-            .guess-area input { width: 100%; }
-            .chat-container { min-height: 300px; }
-            .chat-messages { max-height: 200px; }
+            body {
+                padding: 12px;
+            }
+            .card {
+                padding: 14px;
+            }
+            .frames-grid {
+                grid-template-columns: 1fr;
+            }
+            .frame-card img {
+                height: 160px;
+            }
+            .input-group input {
+                min-width: 100px;
+            }
+            .guess-area {
+                flex-direction: column;
+            }
+            .guess-area input {
+                width: 100%;
+            }
+            .chat-container {
+                min-height: 300px;
+            }
+            .chat-messages {
+                max-height: 200px;
+            }
         }
     </style>
 </head>
@@ -746,10 +765,9 @@
     <div class="subtitle">Создайте комнату или подключитесь по коду</div>
 
     <div class="main-grid">
-        <!-- Левая колонка — игра -->
+        <!-- Левая колонка -->
         <div>
 
-            <!-- Блок с API ключами -->
             <div class="card">
                 <h3>🔑 API Ключи</h3>
                 <div class="input-group">
@@ -767,7 +785,6 @@
                 </div>
             </div>
 
-            <!-- Блок подключения к комнате -->
             <div class="card">
                 <h3>🏠 Комната</h3>
                 <div class="input-group">
@@ -778,9 +795,11 @@
                     <button id="leaveRoomBtn" class="danger" style="display:none;">🚪 Выйти</button>
                 </div>
                 <div class="room-info" id="roomInfo">💡 Создайте комнату или введите код для подключения</div>
+                <div id="connectionStatus" style="margin-top:6px;">
+                    <span class="connection-status offline">⛔ Не подключен</span>
+                </div>
             </div>
 
-            <!-- Блок игры -->
             <div class="card">
                 <h3>🎯 Игра</h3>
 
@@ -837,7 +856,7 @@
             </div>
         </div>
 
-        <!-- Правая колонка — чат -->
+        <!-- Чат -->
         <div class="chat-container">
             <div class="chat-header">
                 💬 Чат
@@ -854,7 +873,7 @@
     </div>
 
     <div class="footer">
-        <a href="https://www.omdbapi.com/" target="_blank">OMDb API</a> · 
+        <a href="https://www.omdbapi.com/" target="_blank">OMDb API</a> ·
         <a href="https://kinopoiskapiunofficial.tech/" target="_blank">Kinopoisk API</a> ·
         <a href="https://peerjs.com/" target="_blank">PeerJS</a> (WebRTC)
     </div>
@@ -871,7 +890,6 @@
         const STORAGE_OMDB_KEY = 'omdb_api_key';
         const STORAGE_KP_KEY = 'kp_api_key';
         const STATS_KEY = 'kinopoisk_game_stats';
-        const PEER_ID_KEY = 'peer_id';
 
         const SEARCH_WORDS = [
             'интерстеллар', 'матрица', 'титаник', 'аватар', 'гладиатор',
@@ -894,6 +912,7 @@
         const joinRoomBtn = document.getElementById('joinRoomBtn');
         const leaveRoomBtn = document.getElementById('leaveRoomBtn');
         const roomInfo = document.getElementById('roomInfo');
+        const connectionStatus = document.getElementById('connectionStatus');
 
         const framesGrid = document.getElementById('framesGrid');
         const titleDisplay = document.getElementById('titleDisplay');
@@ -934,7 +953,6 @@
         let isEasyMode = false;
         let hintsRevealed = { rating: false, year: false, director: false };
         let stats = { attempts: 0, wins: 0, errors: 0 };
-        let myPeerId = null;
 
         // Мультиплеер
         let peer = null;
@@ -944,13 +962,8 @@
         let players = {};
         let myName = 'Игрок';
         let isConnected = false;
-        let gameState = {
-            filmId: null,
-            filmData: null,
-            omdbData: null,
-            isGuessed: false,
-            guesses: {}
-        };
+        let connectionAttempts = 0;
+        let reconnectTimer = null;
 
         // ============================================================
         //  РАБОТА С КЛЮЧАМИ
@@ -1005,6 +1018,15 @@
                 'unknown': `<span class="token-status unknown">⏳ ${text || 'Ожидание'}</span>`
             };
             tokenStatus.innerHTML = statusMap[status] || statusMap.unknown;
+        }
+
+        function updateConnectionStatus(status, text) {
+            const statusMap = {
+                'online': '<span class="connection-status online">✅ Подключен</span>',
+                'offline': '<span class="connection-status offline">⛔ Не подключен</span>',
+                'connecting': '<span class="connection-status connecting">⏳ Подключение...</span>'
+            };
+            connectionStatus.innerHTML = statusMap[status] || statusMap.offline;
         }
 
         // ============================================================
@@ -1360,7 +1382,7 @@
         }
 
         // ============================================================
-        //  МУЛЬТИПЛЕЕР
+        //  МУЛЬТИПЛЕЕР — ИСПРАВЛЕННАЯ ВЕРСИЯ
         // ============================================================
         function addChatMessage(text, type = 'system', player = null) {
             const div = document.createElement('div');
@@ -1389,6 +1411,235 @@
             onlineCount.textContent = `👤 ${count} онлайн`;
         }
 
+        function setupConnection(conn, isIncoming = false) {
+            connection = conn;
+
+            conn.on('open', () => {
+                isConnected = true;
+                updateConnectionStatus('online', '✅ Подключен');
+                roomInfo.innerHTML = `🏠 Подключено к комнате <strong>${roomCodeInput.value || roomCode}</strong>`;
+                createRoomBtn.style.display = 'none';
+                joinRoomBtn.style.display = 'none';
+                leaveRoomBtn.style.display = 'inline-block';
+                chatInput.disabled = false;
+                chatSendBtn.disabled = false;
+
+                if (!isIncoming) {
+                    // Отправляем свою информацию при подключении
+                    conn.send({
+                        type: 'join',
+                        name: myName,
+                        peerId: peer.id
+                    });
+                }
+
+                addChatMessage(`👋 Вы вошли как <strong>${myName}</strong>`, 'system');
+                setFeedback(`✅ Подключено к комнате!`, 'success');
+
+                // Если хост, отправляем состояние игры
+                if (isHost) {
+                    setTimeout(() => {
+                        if (currentFilmData) {
+                            broadcastState();
+                        }
+                    }, 500);
+                }
+            });
+
+            conn.on('data', (data) => {
+                handlePeerData(data);
+            });
+
+            conn.on('close', () => {
+                isConnected = false;
+                updateConnectionStatus('offline', '⛔ Отключен');
+                addChatMessage('🔌 Соединение разорвано', 'system');
+                setFeedback('❌ Соединение разорвано', 'error');
+                if (!isHost) {
+                    leaveRoom();
+                }
+            });
+
+            conn.on('error', (err) => {
+                console.error('Connection error:', err);
+                setFeedback(`❌ Ошибка соединения: ${err.message}`, 'error');
+            });
+        }
+
+        function handlePeerData(data) {
+            console.log('📩 Получены данные:', data);
+
+            switch (data.type) {
+                case 'join':
+                    players[data.peerId] = { name: data.name, guessed: false };
+                    updateOnlineCount();
+                    addChatMessage(`👤 <strong>${data.name}</strong> присоединился`, 'system');
+
+                    // Если хост, отправляем текущее состояние игры
+                    if (isHost && currentFilmData) {
+                        setTimeout(() => broadcastState(), 300);
+                    }
+                    break;
+
+                case 'player_left':
+                    delete players[data.peerId];
+                    updateOnlineCount();
+                    addChatMessage(`👤 <strong>${data.name}</strong> покинул комнату`, 'system');
+                    break;
+
+                case 'guess':
+                    if (data.guessed) {
+                        players[data.peerId].guessed = true;
+                        addChatMessage(`🎯 <strong>${data.name}</strong> угадал фильм!`, 'system');
+                        checkAllGuessed();
+                    } else {
+                        addChatMessage(`❌ <strong>${data.name}</strong>: ${data.guess} — не угадал`, '');
+                    }
+                    updateOnlineCount();
+                    break;
+
+                case 'chat':
+                    addChatMessage(`💬 <strong>${data.name}</strong>: ${data.message}`, '');
+                    break;
+
+                case 'state':
+                    if (!isHost) {
+                        gameState = data.gameState;
+                        currentFilmData = gameState.filmData;
+                        currentOmdbData = gameState.omdbData;
+                        currentFilmId = gameState.filmId;
+                        isGuessed = gameState.isGuessed;
+                        showFilmInfo(currentFilmData, currentOmdbData);
+
+                        if (isGuessed) {
+                            const name = currentFilmData?.nameRu || currentFilmData?.nameEn || 'Без названия';
+                            revealTitle(name);
+                            guessInput.disabled = true;
+                            guessBtn.disabled = true;
+                            setFeedback(`🎯 Фильм уже угадан!`, 'success');
+                        } else if (currentFilmId) {
+                            getKpFrames(currentFilmId).then(frames => {
+                                if (frames.length > 0) showFrames(frames);
+                            });
+                        }
+                    }
+                    break;
+
+                case 'game_over':
+                    addChatMessage(`🏆 Игра завершена! ${data.winner} угадал(а) фильм!`, 'system');
+                    break;
+
+                case 'new_game':
+                    if (!isHost) {
+                        currentFilmData = null;
+                        currentOmdbData = null;
+                        isGuessed = false;
+                        clearFrames();
+                        showFilmInfo(null, null);
+                        guessInput.disabled = false;
+                        guessBtn.disabled = false;
+                        // Сброс статуса угадывания для всех
+                        Object.keys(players).forEach(id => {
+                            players[id].guessed = false;
+                        });
+                        updateOnlineCount();
+                        setFeedback('🎬 Новый раунд! Угадывайте!', 'info');
+                    }
+                    break;
+
+                case 'sync_players':
+                    // Синхронизация списка игроков
+                    if (data.players) {
+                        players = data.players;
+                        updateOnlineCount();
+                    }
+                    break;
+
+                default:
+                    console.log('Неизвестный тип данных:', data.type);
+            }
+        }
+
+        function broadcastState() {
+            if (!connection || !isHost) return;
+            const state = {
+                type: 'state',
+                gameState: {
+                    filmId: currentFilmId,
+                    filmData: currentFilmData,
+                    omdbData: currentOmdbData,
+                    isGuessed: isGuessed
+                }
+            };
+            connection.send(state);
+        }
+
+        function broadcastGuess(guessed, guessText) {
+            if (!connection) return;
+            const data = {
+                type: 'guess',
+                name: myName,
+                peerId: peer.id,
+                guessed: guessed,
+                guess: guessText
+            };
+            connection.send(data);
+
+            if (guessed) {
+                players[peer.id] = { ...players[peer.id], guessed: true };
+                addChatMessage(`🎯 <strong>${myName}</strong> угадал фильм!`, 'system');
+                checkAllGuessed();
+            } else {
+                addChatMessage(`❌ <strong>${myName}</strong>: ${guessText} — не угадал`, '');
+            }
+            updateOnlineCount();
+        }
+
+        function broadcastChat(message) {
+            if (!connection) return;
+            const data = {
+                type: 'chat',
+                name: myName,
+                peerId: peer.id,
+                message: message
+            };
+            connection.send(data);
+            addChatMessage(`💬 <strong>${myName}</strong>: ${message}`, '');
+        }
+
+        function broadcastNewGame() {
+            if (!connection || !isHost) return;
+            const data = { type: 'new_game' };
+            connection.send(data);
+            // Сброс для всех игроков
+            Object.keys(players).forEach(id => {
+                players[id].guessed = false;
+            });
+            updateOnlineCount();
+        }
+
+        function broadcastSyncPlayers() {
+            if (!connection || !isHost) return;
+            const data = {
+                type: 'sync_players',
+                players: players
+            };
+            connection.send(data);
+        }
+
+        function checkAllGuessed() {
+            const allGuessed = Object.values(players).every(p => p.guessed === true);
+            if (allGuessed && Object.keys(players).length > 1) {
+                addChatMessage(`🎉 Все игроки угадали фильм!`, 'system');
+                if (isHost) {
+                    connection.send({ type: 'game_over', winner: 'Все' });
+                }
+            }
+        }
+
+        // ============================================================
+        //  УПРАВЛЕНИЕ КОМНАТОЙ
+        // ============================================================
         async function createRoom() {
             const name = playerNameInput.value.trim() || 'Игрок';
             myName = name;
@@ -1401,18 +1652,27 @@
             setFeedback('⏳ Создание комнаты...', 'loading');
 
             try {
-                // Создаём Peer
-                if (peer) peer.destroy();
+                if (peer) {
+                    peer.destroy();
+                    peer = null;
+                }
+
                 peer = new Peer(undefined, {
-                    debug: 2
+                    debug: 2,
+                    config: {
+                        iceServers: [
+                            { urls: 'stun:stun.l.google.com:19302' },
+                            { urls: 'stun:stun1.l.google.com:19302' }
+                        ]
+                    }
                 });
 
                 peer.on('open', (id) => {
-                    myPeerId = id;
                     roomCode = id.slice(0, 8);
                     roomCodeInput.value = roomCode;
                     isHost = true;
                     isConnected = true;
+                    updateConnectionStatus('online', '✅ Хост');
 
                     roomInfo.innerHTML = `🏠 Код комнаты: <strong>${roomCode}</strong> · Вы хост`;
                     createRoomBtn.style.display = 'none';
@@ -1421,9 +1681,8 @@
                     chatInput.disabled = false;
                     chatSendBtn.disabled = false;
 
-                    // Добавляем себя в игроков
                     players = {};
-                    players[myPeerId] = { name: myName, guessed: false };
+                    players[peer.id] = { name: myName, guessed: false };
                     updateOnlineCount();
 
                     addChatMessage(`🎉 Комната создана! Код: <strong>${roomCode}</strong>`, 'system');
@@ -1436,13 +1695,23 @@
                 });
 
                 peer.on('connection', (conn) => {
-                    connection = conn;
-                    setupConnection(conn);
+                    setupConnection(conn, true);
                 });
 
                 peer.on('error', (err) => {
                     console.error('Peer error:', err);
-                    setFeedback(`❌ Ошибка: ${err.message}`, 'error');
+                    if (err.type === 'unavailable-id') {
+                        setFeedback('❌ Ошибка: ID занят. Попробуйте ещё раз.', 'error');
+                    } else {
+                        setFeedback(`❌ Ошибка: ${err.message}`, 'error');
+                    }
+                });
+
+                peer.on('disconnected', () => {
+                    updateConnectionStatus('offline', '⛔ Отключен');
+                    if (isHost) {
+                        setFeedback('❌ Соединение потеряно. Пересоздайте комнату.', 'error');
+                    }
                 });
 
             } catch (e) {
@@ -1467,228 +1736,87 @@
             }
 
             setFeedback('⏳ Подключение к комнате...', 'loading');
+            updateConnectionStatus('connecting', '⏳ Подключение...');
 
             try {
-                if (peer) peer.destroy();
+                if (peer) {
+                    peer.destroy();
+                    peer = null;
+                }
+
                 peer = new Peer(undefined, {
-                    debug: 2
+                    debug: 2,
+                    config: {
+                        iceServers: [
+                            { urls: 'stun:stun.l.google.com:19302' },
+                            { urls: 'stun:stun1.l.google.com:19302' }
+                        ]
+                    }
                 });
 
                 peer.on('open', (id) => {
-                    myPeerId = id;
                     isHost = false;
+                    // Подключаемся к хосту с таймаутом
+                    const conn = peer.connect(code, {
+                        reliable: true
+                    });
 
-                    // Подключаемся к хосту
-                    const conn = peer.connect(code);
-                    connection = conn;
-                    setupConnection(conn);
+                    if (conn) {
+                        setupConnection(conn, false);
+                        // Добавляем себя в игроков
+                        players[peer.id] = { name: myName, guessed: false };
+                        updateOnlineCount();
+                    } else {
+                        setFeedback('❌ Не удалось подключиться к комнате', 'error');
+                        updateConnectionStatus('offline', '⛔ Ошибка');
+                    }
                 });
 
                 peer.on('error', (err) => {
                     console.error('Peer error:', err);
-                    setFeedback(`❌ Ошибка подключения: ${err.message}`, 'error');
+                    if (err.type === 'peer-unavailable') {
+                        setFeedback(`❌ Комната "${code}" не найдена. Проверьте код.`, 'error');
+                    } else if (err.type === 'invalid-id') {
+                        setFeedback('❌ Неверный формат кода комнаты', 'error');
+                    } else {
+                        setFeedback(`❌ Ошибка: ${err.message}`, 'error');
+                    }
+                    updateConnectionStatus('offline', '⛔ Ошибка');
                 });
+
+                // Таймаут подключения
+                setTimeout(() => {
+                    if (!isConnected) {
+                        setFeedback('❌ Время подключения истекло. Попробуйте ещё раз.', 'error');
+                        updateConnectionStatus('offline', '⛔ Таймаут');
+                        if (peer) peer.destroy();
+                    }
+                }, 15000);
 
             } catch (e) {
                 console.error('Join room error:', e);
                 setFeedback(`❌ Ошибка: ${e.message}`, 'error');
-            }
-        }
-
-        function setupConnection(conn) {
-            conn.on('open', () => {
-                isConnected = true;
-                roomInfo.innerHTML = `🏠 Подключено к комнате <strong>${roomCodeInput.value}</strong>`;
-                createRoomBtn.style.display = 'none';
-                joinRoomBtn.style.display = 'none';
-                leaveRoomBtn.style.display = 'inline-block';
-                chatInput.disabled = false;
-                chatSendBtn.disabled = false;
-
-                // Отправляем свою информацию
-                conn.send({
-                    type: 'join',
-                    name: myName,
-                    peerId: myPeerId
-                });
-
-                addChatMessage(`👋 Вы вошли как <strong>${myName}</strong>`, 'system');
-
-                setFeedback(`✅ Подключено к комнате!`, 'success');
-            });
-
-            conn.on('data', (data) => {
-                handlePeerData(data);
-            });
-
-            conn.on('close', () => {
-                isConnected = false;
-                addChatMessage('🔌 Соединение разорвано', 'system');
-                setFeedback('❌ Соединение разорвано', 'error');
-                leaveRoom();
-            });
-        }
-
-        function handlePeerData(data) {
-            switch (data.type) {
-                case 'join':
-                    players[data.peerId] = { name: data.name, guessed: false };
-                    updateOnlineCount();
-                    addChatMessage(`👤 <strong>${data.name}</strong> присоединился`, 'system');
-
-                    // Если хост, отправляем текущее состояние игры
-                    if (isHost && currentFilmData) {
-                        broadcastState();
-                    }
-                    break;
-
-                case 'player_left':
-                    delete players[data.peerId];
-                    updateOnlineCount();
-                    addChatMessage(`👤 <strong>${data.name}</strong> покинул комнату`, 'system');
-                    break;
-
-                case 'guess':
-                    if (data.guessed) {
-                        players[data.peerId].guessed = true;
-                        addChatMessage(`🎯 <strong>${data.name}</strong> угадал фильм!`, 'system');
-                        // Проверяем, все ли угадали
-                        checkAllGuessed();
-                    } else {
-                        addChatMessage(`❌ <strong>${data.name}</strong>: ${data.guess} — не угадал`, '');
-                    }
-                    updateOnlineCount();
-                    break;
-
-                case 'chat':
-                    addChatMessage(`💬 <strong>${data.name}</strong>: ${data.message}`, '');
-                    break;
-
-                case 'state':
-                    // Получаем состояние игры от хоста
-                    if (!isHost) {
-                        gameState = data.gameState;
-                        currentFilmData = gameState.filmData;
-                        currentOmdbData = gameState.omdbData;
-                        currentFilmId = gameState.filmId;
-                        isGuessed = gameState.isGuessed;
-                        showFilmInfo(currentFilmData, currentOmdbData);
-                        if (isGuessed) {
-                            const name = currentFilmData.nameRu || currentFilmData.nameEn || 'Без названия';
-                            revealTitle(name);
-                            guessInput.disabled = true;
-                            guessBtn.disabled = true;
-                            setFeedback(`🎯 Фильм уже угадан!`, 'success');
-                        } else {
-                            // Загружаем кадры
-                            getKpFrames(currentFilmId).then(frames => {
-                                if (frames.length > 0) showFrames(frames);
-                            });
-                        }
-                    }
-                    break;
-
-                case 'game_over':
-                    addChatMessage(`🏆 Игра завершена! ${data.winner} угадал(а) фильм!`, 'system');
-                    break;
-
-                case 'new_game':
-                    // Новый раунд
-                    if (!isHost) {
-                        currentFilmData = null;
-                        currentOmdbData = null;
-                        isGuessed = false;
-                        clearFrames();
-                        showFilmInfo(null, null);
-                        guessInput.disabled = false;
-                        guessBtn.disabled = false;
-                        setFeedback('🎬 Новый раунд! Угадывайте!', 'info');
-                    }
-                    break;
-            }
-        }
-
-        function broadcastState() {
-            if (!connection) return;
-            const state = {
-                type: 'state',
-                gameState: {
-                    filmId: currentFilmId,
-                    filmData: currentFilmData,
-                    omdbData: currentOmdbData,
-                    isGuessed: isGuessed
-                }
-            };
-            connection.send(state);
-        }
-
-        function broadcastGuess(guessed, guessText) {
-            if (!connection) return;
-            const data = {
-                type: 'guess',
-                name: myName,
-                peerId: myPeerId,
-                guessed: guessed,
-                guess: guessText
-            };
-            connection.send(data);
-
-            if (guessed) {
-                players[myPeerId].guessed = true;
-                addChatMessage(`🎯 <strong>${myName}</strong> угадал фильм!`, 'system');
-                checkAllGuessed();
-            } else {
-                addChatMessage(`❌ <strong>${myName}</strong>: ${guessText} — не угадал`, '');
-            }
-            updateOnlineCount();
-        }
-
-        function broadcastChat(message) {
-            if (!connection) return;
-            const data = {
-                type: 'chat',
-                name: myName,
-                peerId: myPeerId,
-                message: message
-            };
-            connection.send(data);
-            addChatMessage(`💬 <strong>${myName}</strong>: ${message}`, '');
-        }
-
-        function broadcastNewGame() {
-            if (!connection) return;
-            const data = { type: 'new_game' };
-            connection.send(data);
-            // Сброс для всех игроков
-            Object.keys(players).forEach(id => {
-                players[id].guessed = false;
-            });
-            updateOnlineCount();
-        }
-
-        function checkAllGuessed() {
-            const allGuessed = Object.values(players).every(p => p.guessed === true);
-            if (allGuessed && Object.keys(players).length > 0) {
-                // Все угадали!
-                addChatMessage(`🎉 Все игроки угадали фильм!`, 'system');
-                if (isHost) {
-                    connection.send({ type: 'game_over', winner: 'Все' });
-                }
+                updateConnectionStatus('offline', '⛔ Ошибка');
             }
         }
 
         function leaveRoom() {
             if (connection) {
-                connection.send({
-                    type: 'player_left',
-                    name: myName,
-                    peerId: myPeerId
-                });
-                connection.close();
+                try {
+                    connection.send({
+                        type: 'player_left',
+                        name: myName,
+                        peerId: peer ? peer.id : 'unknown'
+                    });
+                    connection.close();
+                } catch (e) {}
             }
             if (peer) {
-                peer.destroy();
+                try {
+                    peer.destroy();
+                } catch (e) {}
             }
+
             isConnected = false;
             isHost = false;
             players = {};
@@ -1700,9 +1828,13 @@
             chatInput.disabled = true;
             chatSendBtn.disabled = true;
             roomInfo.innerHTML = '💡 Создайте комнату или введите код для подключения';
+            updateConnectionStatus('offline', '⛔ Не подключен');
 
             addChatMessage('🔌 Вы покинули комнату', 'system');
             setFeedback('💡 Вы покинули комнату', 'info');
+
+            // Очищаем чат от системных сообщений при выходе
+            // Не очищаем полностью, чтобы сохранить историю
         }
 
         // ============================================================
@@ -1842,7 +1974,7 @@
 
                 // Если хост — рассылаем состояние
                 if (isHost && isConnected) {
-                    broadcastState();
+                    setTimeout(() => broadcastState(), 300);
                 }
 
                 guessInput.disabled = false;
@@ -1905,7 +2037,7 @@
 
                 // Отправляем состояние
                 if (isHost && isConnected) {
-                    broadcastState();
+                    setTimeout(() => broadcastState(), 300);
                 }
             } else {
                 addError();
@@ -1964,7 +2096,7 @@
             guessBtn.disabled = true;
 
             if (isHost && isConnected) {
-                broadcastState();
+                setTimeout(() => broadcastState(), 300);
             }
         }
 
@@ -2001,26 +2133,27 @@
         });
 
         chatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && chatInput.value.trim()) {
+            if (e.key === 'Enter' && chatInput.value.trim() && isConnected) {
                 e.preventDefault();
                 const msg = chatInput.value.trim();
-                if (isConnected) {
-                    broadcastChat(msg);
-                } else {
-                    addChatMessage(`💬 <strong>${myName}</strong>: ${msg}`, '');
-                }
+                broadcastChat(msg);
+                chatInput.value = '';
+            } else if (e.key === 'Enter' && chatInput.value.trim() && !isConnected) {
+                e.preventDefault();
+                const msg = chatInput.value.trim();
+                addChatMessage(`💬 <strong>${myName}</strong>: ${msg}`, '');
                 chatInput.value = '';
             }
         });
 
         chatSendBtn.addEventListener('click', () => {
-            if (chatInput.value.trim()) {
+            if (chatInput.value.trim() && isConnected) {
                 const msg = chatInput.value.trim();
-                if (isConnected) {
-                    broadcastChat(msg);
-                } else {
-                    addChatMessage(`💬 <strong>${myName}</strong>: ${msg}`, '');
-                }
+                broadcastChat(msg);
+                chatInput.value = '';
+            } else if (chatInput.value.trim() && !isConnected) {
+                const msg = chatInput.value.trim();
+                addChatMessage(`💬 <strong>${myName}</strong>: ${msg}`, '');
                 chatInput.value = '';
             }
         });
@@ -2039,13 +2172,6 @@
             if (omdb) omdbTokenInput.value = omdb;
             if (kp) kpTokenInput.value = kp;
 
-            // Загружаем сохранённый Peer ID
-            const savedPeerId = localStorage.getItem(PEER_ID_KEY);
-            if (savedPeerId) {
-                // Не используем автоматически, чтобы не создавать конфликтов
-            }
-
-            // Проверяем ключи при старте
             setTimeout(() => {
                 if (getOmdbToken() && getKpToken()) {
                     testTokens();
@@ -2053,6 +2179,7 @@
             }, 600);
 
             setFeedback('💡 Введите ключи, затем создайте комнату', 'info');
+            updateConnectionStatus('offline', '⛔ Не подключен');
         }
 
         init();
