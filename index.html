@@ -566,7 +566,7 @@
     </script>
     <script>
         // ============================================================
-        //  ОДИНОЧНАЯ ВЕРСИЯ + СИНХРОНИЗАЦИЯ ПОДСКАЗОК
+        //  ОДИНОЧНАЯ ВЕРСИЯ + МУЛЬТИПЛЕЕР (НЕ МЕНЯЕМ ИГРОВУЮ ЛОГИКУ)
         // ============================================================
 
         // ---------- КОНФИГ ----------
@@ -775,7 +775,7 @@
         }
 
         // ============================================================
-        //  ИГРА — КАК В ОДИНОЧНОЙ ВЕРСИИ
+        //  ИГРОВАЯ ЛОГИКА — ПОЛНОСТЬЮ ИЗ ОДИНОЧНОЙ ВЕРСИИ
         // ============================================================
 
         function showFilm(data, omdbData) {
@@ -790,28 +790,20 @@
                 ['hRating', 'hYear', 'hDirector'].forEach(id => { $(id).disabled = true; });
                 return;
             }
-
-            // ВСЁ СКРЫТО
-            fYear.textContent = '📅 —';
-            fGenre.textContent = '🎭 —';
-            fRuntime.textContent = '⏱️ —';
+            fYear.textContent = '📅 ' + (omdbData?.Year || data.year || '—');
+            fGenre.textContent = '🎭 ' + (omdbData?.Genre || (data.genres ? data.genres.map(g => g.genre).join(', ') : '—'));
+            fRuntime.textContent = '⏱️ ' + (omdbData?.Runtime || (data.filmLength ? data.filmLength + ' мин' : '—'));
             fRating.textContent = '⭐ —';
             fDirector.textContent = '🎬 —';
-
             titleDisplay.className = 'hidden-title';
             titleDisplay.textContent = '???';
-
-            // Сбрасываем подсказки (но не синхронизируем, синхронизация отдельно)
             hints = { r: false, y: false, d: false };
-            hRating.textContent = '⭐ Рейтинг';
-            hRating.className = '';
-            hRating.disabled = false;
-            hYear.textContent = '📅 Год';
-            hYear.className = '';
-            hYear.disabled = false;
-            hDirector.textContent = '🎬 Режиссёр';
-            hDirector.className = '';
-            hDirector.disabled = false;
+            ['hRating', 'hYear', 'hDirector'].forEach(id => {
+                $(id).disabled = false;
+                const labels = { hRating: '⭐ Рейтинг', hYear: '📅 Год', hDirector: '🎬 Режиссёр' };
+                $(id).textContent = labels[id];
+                $(id).className = '';
+            });
         }
 
         function showFrames(imgs) {
@@ -848,109 +840,45 @@
             titleDisplay.textContent = name;
         }
 
-        // ============================================================
-        //  ПОДСКАЗКИ — КАК В ОДИНОЧНОЙ ВЕРСИИ
-        // ============================================================
         function revealHint(type) {
             if (!film || guessed) return;
-            if (hints[type]) return;
-
-            const hintData = {
-                r: {
-                    el: hRating,
-                    label: 'Рейтинг',
-                    value: omdb?.imdbRating || film?.ratingImdb || film?.ratingKinopoisk || '—',
-                    field: fRating,
-                    prefix: '⭐ '
-                },
-                y: {
-                    el: hYear,
-                    label: 'Год',
-                    value: omdb?.Year || film?.year || '—',
-                    field: fYear,
-                    prefix: '📅 '
-                },
-                d: {
-                    el: hDirector,
-                    label: 'Режиссёр',
-                    value: omdb?.Director || '—',
-                    field: fDirector,
-                    prefix: '🎬 '
-                }
+            const map = {
+                r: { el: hRating, label: 'Рейтинг', val: omdb?.imdbRating || film?.ratingImdb || film?.ratingKinopoisk || '—',
+                    field: fRating },
+                y: { el: hYear, label: 'Год', val: omdb?.Year || film?.year || '—', field: fYear },
+                d: { el: hDirector, label: 'Режиссёр', val: omdb?.Director || '—', field: fDirector }
             };
-
-            const h = hintData[type];
-            if (!h) return;
-
+            const h = map[type];
+            if (hints[type]) return;
             hints[type] = true;
-            h.field.textContent = h.prefix + h.value;
+            h.field.textContent = (type === 'y' ? '📅 ' : type === 'r' ? '⭐ ' : '🎬 ') + h.val;
             h.el.textContent = '✅ ' + h.label;
             h.el.className = 'active';
 
-            // Синхронизируем подсказку с другими игроками
+            // Синхронизация подсказок
             if (isConnected) {
-                sendToPeer('hint', { type: type, value: h.value, label: h.label, prefix: h.prefix });
+                sendToPeer('hint', { type: type, value: h.val, label: h.label, prefix: type === 'y' ? '📅 ' : type === 'r' ?
+                        '⭐ ' : '🎬 ' });
             }
         }
 
-        // ПРИВЯЗКА КНОПОК ПОДСКАЗОК
-        hRating.onclick = function() { revealHint('r'); };
-        hYear.onclick = function() { revealHint('y'); };
-        hDirector.onclick = function() { revealHint('d'); };
+        hRating.onclick = () => revealHint('r');
+        hYear.onclick = () => revealHint('y');
+        hDirector.onclick = () => revealHint('d');
 
-        // Функция для применения подсказки от другого игрока
-        function applyHintFromPeer(data) {
-            if (!data) return;
-            const type = data.type;
-            const value = data.value;
-            const label = data.label;
-            const prefix = data.prefix;
-
-            if (hints[type]) return; // Уже показана
-
-            hints[type] = true;
-
-            const fieldMap = {
-                r: fRating,
-                y: fYear,
-                d: fDirector
-            };
-            const elMap = {
-                r: hRating,
-                y: hYear,
-                d: hDirector
-            };
-
-            if (fieldMap[type]) {
-                fieldMap[type].textContent = prefix + value;
-            }
-            if (elMap[type]) {
-                elMap[type].textContent = '✅ ' + label;
-                elMap[type].className = 'active';
-            }
-        }
-
-        // ============================================================
-        //  ЗАГРУЗКА ФИЛЬМА
-        // ============================================================
         async function loadFilm(mode) {
             const o = getOmdb(),
                 k = getKp();
-            if (!o || !k) {
-                feedback.textContent = '❌ Введите API ключи';
-                feedback.className = 'feedback error';
-                return;
-            }
+            if (!o || !k) { feedback.textContent = '❌ Введите API ключи';
+                feedback.className = 'feedback error'; return; }
             if (loading) return;
             loading = true;
             guessed = false;
             easyMode = mode === 'easy';
-
             feedback.textContent = '⏳ Загрузка...';
             feedback.className = 'feedback loading';
             guessInput.disabled = true;
             guessBtn.disabled = true;
-
             showFilm(null, null);
             frames.innerHTML =
                 '<div class="frame-card"><div class="no-image">⏳ Загрузка...</div></div>'.repeat(3);
@@ -959,7 +887,6 @@
                 let movie = null,
                     omdbData = null,
                     id = null;
-
                 if (easyMode) {
                     let found = null;
                     for (let i = 0; i < 5 && !found; i++) {
@@ -974,14 +901,11 @@
                             if (fr.length) { found = s; }
                         }
                     }
-                    if (!found) {
-                        feedback.textContent = '❌ Не найден';
+                    if (!found) { feedback.textContent = '❌ Не найден';
                         feedback.className = 'feedback error';
                         loading = false;
                         guessInput.disabled = false;
-                        guessBtn.disabled = false;
-                        return;
-                    }
+                        guessBtn.disabled = false; return; }
                     id = found.filmId;
                     movie = await kpFilm(id);
                     const r = await fetch(OMDB + '?apikey=' + o + '&t=' + encodeURIComponent(found.nameRu || found.nameEn));
@@ -1008,50 +932,31 @@
                             }
                         }
                     }
-                    if (!found) {
-                        feedback.textContent = '❌ Не найден';
+                    if (!found) { feedback.textContent = '❌ Не найден';
                         feedback.className = 'feedback error';
                         loading = false;
                         guessInput.disabled = false;
-                        guessBtn.disabled = false;
-                        return;
-                    }
+                        guessBtn.disabled = false; return; }
                 }
 
                 film = movie;
                 filmId = id;
                 omdb = omdbData;
-
-                // Сохраняем все названия для поиска
-                film.allTitles = [];
-                if (film.nameRu) film.allTitles.push(film.nameRu);
-                if (film.nameEn) film.allTitles.push(film.nameEn);
-                if (film.alternativeName) film.allTitles.push(film.alternativeName);
                 if (omdbData && omdbData.Title) {
-                    film.allTitles.push(omdbData.Title);
                     film.originalTitle = omdbData.Title;
                 }
-
                 showFilm(movie, omdbData);
-
                 const fr = await kpFrames(id);
-                if (fr.length) {
-                    showFrames(fr);
+                if (fr.length) { showFrames(fr);
                     feedback.textContent = '🎬 Какой фильм? (' + Math.min(fr.length, 3) + ' кадров)';
-                    feedback.className = 'feedback info';
-                } else {
-                    showFrames([]);
+                    feedback.className = 'feedback info'; } else { showFrames([]);
                     feedback.textContent = '🖼️ Кадры не найдены';
-                    feedback.className = 'feedback error';
-                }
+                    feedback.className = 'feedback error'; }
 
                 if (isConnected) syncGame();
 
-            } catch (e) {
-                feedback.textContent = '❌ ' + e.message;
-                feedback.className = 'feedback error';
-            }
-
+            } catch (e) { feedback.textContent = '❌ ' + e.message;
+                feedback.className = 'feedback error'; }
             loading = false;
             guessInput.disabled = false;
             guessBtn.disabled = false;
@@ -1062,74 +967,44 @@
         easyBtn.onclick = () => loadFilm('easy');
 
         // ============================================================
-        //  ПРОВЕРКА УГАДЫВАНИЯ — КАК В ОДИНОЧНОЙ
+        //  УГАДЫВАНИЕ — ИЗ ОДИНОЧНОЙ ВЕРСИИ
         // ============================================================
         function checkGuess(guessText) {
             if (!film) return false;
-
             const guess = guessText.trim().toLowerCase();
             if (!guess) return false;
 
-            const nameRu = (film.nameRu || '').toLowerCase().trim();
-            const nameEn = (film.nameEn || '').toLowerCase().trim();
-            const altName = (film.alternativeName || '').toLowerCase().trim();
-            const omdbTitle = (omdb?.Title || '').toLowerCase().trim();
-            const originalTitle = (film.originalTitle || '').toLowerCase().trim();
+            const name = (film.nameRu || film.nameEn || omdb?.Title || film.originalTitle || '').toLowerCase().trim();
+            const nameEn = (film.nameEn || omdb?.Title || '').toLowerCase().trim();
+            const alt = (film.alternativeName || '').toLowerCase().trim();
 
-            // Точные совпадения
-            if (guess === nameRu) return true;
-            if (guess === nameEn) return true;
-            if (guess === altName) return true;
-            if (guess === omdbTitle) return true;
-            if (guess === originalTitle) return true;
+            const gl = guess;
+            const nl = name;
+            const enl = nameEn;
+            const altl = alt;
 
-            // Вхождения (если длина больше 3)
-            if (guess.length >= 3) {
-                if (nameRu.includes(guess)) return true;
-                if (nameEn.includes(guess)) return true;
-                if (altName.includes(guess)) return true;
-                if (omdbTitle.includes(guess)) return true;
-                if (originalTitle.includes(guess)) return true;
-            }
+            const ok = gl === nl || gl === enl || gl === altl ||
+                nl.includes(gl) || gl.includes(nl) ||
+                (enl && enl.includes(gl)) ||
+                (altl && altl.includes(gl));
 
-            // Обратные вхождения
-            if (nameRu.length >= 3 && guess.includes(nameRu)) return true;
-            if (nameEn.length >= 3 && guess.includes(nameEn)) return true;
-            if (altName.length >= 3 && guess.includes(altName)) return true;
-            if (omdbTitle.length >= 3 && guess.includes(omdbTitle)) return true;
-            if (originalTitle.length >= 3 && guess.includes(originalTitle)) return true;
-
-            return false;
+            return ok;
         }
 
-        // ---------- ОБРАБОТЧИК УГАДЫВАНИЯ ----------
         function handleGuess() {
-            if (loading || !film) {
-                feedback.textContent = '❌ Сначала загрузите фильм';
-                feedback.className = 'feedback error';
-                return;
-            }
-            if (guessed) {
-                feedback.textContent = '✅ Вы уже угадали!';
-                feedback.className = 'feedback success';
-                return;
-            }
-
-            const guessText = guessInput.value.trim();
-            if (!guessText) {
-                feedback.textContent = '✏️ Введите название';
-                feedback.className = 'feedback error';
-                return;
-            }
-
+            if (loading || !film) { feedback.textContent = '❌ Сначала загрузите фильм';
+                feedback.className = 'feedback error'; return; }
+            if (guessed) { feedback.textContent = '✅ Вы уже угадали!';
+                feedback.className = 'feedback success'; return; }
+            const g = guessInput.value.trim();
+            if (!g) { feedback.textContent = '✏️ Введите название';
+                feedback.className = 'feedback error'; return; }
             suggestList.classList.remove('show');
 
-            const isCorrect = checkGuess(guessText);
-
+            const isCorrect = checkGuess(g);
             const displayName = film.nameRu || film.nameEn || omdb?.Title || film.originalTitle || 'Без названия';
 
             addAttempt();
-
             if (isCorrect) {
                 guessed = true;
                 addWin();
@@ -1138,79 +1013,57 @@
                 feedback.className = 'feedback success';
                 guessInput.disabled = true;
                 guessBtn.disabled = true;
-
                 if (isConnected) {
-                    sendToPeer('guess', { name: myName, guess: guessText, win: true });
+                    sendToPeer('guess', { name: myName, guess: g, win: true });
                     addChat('🎯 <strong>' + myName + '</strong> угадал!', 'system');
-                    syncGame();
                 }
+                if (isConnected) syncGame();
             } else {
                 addError();
                 feedback.textContent = '❌ Не угадал. Ошибок: ' + stats.e;
                 feedback.className = 'feedback error';
                 guessInput.value = '';
                 guessInput.focus();
-
                 if (isConnected) {
-                    sendToPeer('guess', { name: myName, guess: guessText, win: false });
-                    addChat('❌ <strong>' + myName + '</strong>: ' + guessText + ' — не угадал', '');
+                    sendToPeer('guess', { name: myName, guess: g, win: false });
+                    addChat('❌ <strong>' + myName + '</strong>: ' + g + ' — не угадал', '');
                 }
             }
         }
 
         guessBtn.onclick = handleGuess;
-
-        guessInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                handleGuess();
-            }
-        });
+        guessInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault();
+                handleGuess(); } });
 
         // ============================================================
-        //  ПОДБОР ВАРИАНТОВ
+        //  ПОДБОР — ИЗ ОДИНОЧНОЙ ВЕРСИИ
         // ============================================================
         suggestBtn.onclick = async function() {
-            const query = guessInput.value.trim();
-            if (!query) {
-                feedback.textContent = '✏️ Введите слово для поиска';
-                feedback.className = 'feedback error';
-                return;
-            }
-            if (!film) {
-                feedback.textContent = '❌ Сначала загрузите фильм';
-                feedback.className = 'feedback error';
-                return;
-            }
-
-            feedback.textContent = '⏳ Поиск...';
-            feedback.className = 'feedback loading';
-
+            const q = guessInput.value.trim();
+            if (!q) { feedback.textContent = '✏️ Введите слово';
+                feedback.className = 'feedback error'; return; }
+            if (!film) { feedback.textContent = '❌ Сначала загрузите фильм';
+                feedback.className = 'feedback error'; return; }
             suggestList.innerHTML = '<div class="item" style="color:#888;justify-content:center;">⏳ Загрузка...</div>';
             suggestList.classList.add('show');
-
-            const results = await omdbSearch(query);
-
-            if (results && results.length > 0) {
+            const res = await omdbSearch(q);
+            if (res.length) {
                 suggestList.innerHTML = '';
-                results.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'item';
-                    div.innerHTML = `
-                        <span class="title">${item.Title}</span>
-                        <span class="year">${item.Year || '—'}</span>
-                    `;
-                    div.onclick = function() {
+                res.forEach(item => {
+                    const d = document.createElement('div');
+                    d.className = 'item';
+                    d.innerHTML =
+                        '<span class="title">' + item.Title + '</span><span class="year">' + (item.Year || '—') +
+                        '</span>';
+                    d.onclick = function() {
                         const selectedTitle = this.querySelector('.title').textContent;
                         guessInput.value = selectedTitle;
                         suggestList.classList.remove('show');
-
+                        // Вызываем проверку напрямую
                         const isCorrect = checkGuess(selectedTitle);
-
-                        const displayName = film.nameRu || film.nameEn || omdb?.Title || film.originalTitle || 'Без названия';
-
+                        const displayName = film.nameRu || film.nameEn || omdb?.Title || film.originalTitle ||
+                            'Без названия';
                         addAttempt();
-
                         if (isCorrect) {
                             guessed = true;
                             addWin();
@@ -1219,38 +1072,35 @@
                             feedback.className = 'feedback success';
                             guessInput.disabled = true;
                             guessBtn.disabled = true;
-
                             if (isConnected) {
                                 sendToPeer('guess', { name: myName, guess: selectedTitle, win: true });
                                 addChat('🎯 <strong>' + myName + '</strong> угадал!', 'system');
-                                syncGame();
                             }
+                            if (isConnected) syncGame();
                         } else {
                             addError();
                             feedback.textContent = '❌ Не угадал. Ошибок: ' + stats.e;
                             feedback.className = 'feedback error';
                             guessInput.value = '';
                             guessInput.focus();
-
                             if (isConnected) {
                                 sendToPeer('guess', { name: myName, guess: selectedTitle, win: false });
                                 addChat('❌ <strong>' + myName + '</strong>: ' + selectedTitle + ' — не угадал', '');
                             }
                         }
                     };
-                    suggestList.appendChild(div);
+                    suggestList.appendChild(d);
                 });
-                feedback.textContent = '🔍 Найдено ' + results.length + ' вариантов. Выберите.';
+                feedback.textContent = '🔍 ' + res.length + ' вариантов. Выберите.';
                 feedback.className = 'feedback info';
             } else {
                 suggestList.innerHTML = '<div class="item" style="color:#888;justify-content:center;">❌ Ничего не найдено</div>';
-                feedback.textContent = '❌ Ничего не найдено. Попробуйте другое слово.';
+                feedback.textContent = '❌ Ничего не найдено';
                 feedback.className = 'feedback error';
             }
         };
 
-        // Закрытие списка при клике вне
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', e => {
             if (!suggestList.contains(e.target) && e.target !== suggestBtn && e.target !== guessInput) {
                 suggestList.classList.remove('show');
             }
@@ -1297,6 +1147,26 @@
                 conn.send({ type: type, data: data, from: myId, name: myName });
             } catch (e) {
                 console.error('Ошибка отправки:', e);
+            }
+        }
+
+        function applyHintFromPeer(data) {
+            if (!data) return;
+            const type = data.type;
+            const value = data.value;
+            const label = data.label;
+            const prefix = data.prefix;
+
+            if (hints[type]) return;
+            hints[type] = true;
+
+            const fieldMap = { r: fRating, y: fYear, d: fDirector };
+            const elMap = { r: hRating, y: hYear, d: hDirector };
+
+            if (fieldMap[type]) fieldMap[type].textContent = prefix + value;
+            if (elMap[type]) {
+                elMap[type].textContent = '✅ ' + label;
+                elMap[type].className = 'active';
             }
         }
 
@@ -1479,13 +1349,10 @@
                             players = d.players;
                             updateOnline();
                         }
-                        // Синхронизация подсказок
                         if (d.hints) {
                             // Применяем подсказки от хоста
                             for (const type in d.hints) {
                                 if (d.hints[type] && !hints[type]) {
-                                    // Грубо применяем все подсказки
-                                    hints[type] = true;
                                     const fieldMap = { r: fRating, y: fYear, d: fDirector };
                                     const elMap = { r: hRating, y: hYear, d: hDirector };
                                     const labelMap = { r: 'Рейтинг', y: 'Год', d: 'Режиссёр' };
@@ -1495,9 +1362,8 @@
                                         y: omdb?.Year || film?.year || '—',
                                         d: omdb?.Director || '—'
                                     };
-                                    if (fieldMap[type]) {
-                                        fieldMap[type].textContent = prefixMap[type] + valueMap[type];
-                                    }
+                                    hints[type] = true;
+                                    if (fieldMap[type]) fieldMap[type].textContent = prefixMap[type] + valueMap[type];
                                     if (elMap[type]) {
                                         elMap[type].textContent = '✅ ' + labelMap[type];
                                         elMap[type].className = 'active';
@@ -1509,7 +1375,6 @@
                     break;
 
                 case 'hint':
-                    // Применяем подсказку от другого игрока
                     if (data.data && !isHost) {
                         applyHintFromPeer(data.data);
                     }
@@ -1784,7 +1649,7 @@
         console.log('🎬 Угадай фильм — мультиплеер через PeerJS');
         console.log('📌 Код комнаты — 4 цифры');
         console.log('👤 Ваш ID:', myId);
-        console.log('💡 Подсказки синхронизируются между игроками');
+        console.log('💡 Игровая логика — из одиночной версии');
     </script>
 </body>
 </html>
