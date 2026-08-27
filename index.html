@@ -566,7 +566,7 @@
     </script>
     <script>
         // ============================================================
-        //  ВЕРСИЯ С ПРАВИЛЬНЫМИ ПОДСКАЗКАМИ И УГАДЫВАНИЕМ
+        //  ОДИНОЧНАЯ ВЕРСИЯ + СИНХРОНИЗАЦИЯ ПОДСКАЗОК
         // ============================================================
 
         // ---------- КОНФИГ ----------
@@ -775,7 +775,7 @@
         }
 
         // ============================================================
-        //  ИГРА
+        //  ИГРА — КАК В ОДИНОЧНОЙ ВЕРСИИ
         // ============================================================
 
         function showFilm(data, omdbData) {
@@ -791,7 +791,7 @@
                 return;
             }
 
-            // ВСЁ СКРЫТО — показываем только заглушки
+            // ВСЁ СКРЫТО
             fYear.textContent = '📅 —';
             fGenre.textContent = '🎭 —';
             fRuntime.textContent = '⏱️ —';
@@ -801,7 +801,7 @@
             titleDisplay.className = 'hidden-title';
             titleDisplay.textContent = '???';
 
-            // Сбрасываем подсказки
+            // Сбрасываем подсказки (но не синхронизируем, синхронизация отдельно)
             hints = { r: false, y: false, d: false };
             hRating.textContent = '⭐ Рейтинг';
             hRating.className = '';
@@ -849,7 +849,7 @@
         }
 
         // ============================================================
-        //  ПОДСКАЗКИ — ПРАВИЛЬНАЯ РЕАЛИЗАЦИЯ
+        //  ПОДСКАЗКИ — КАК В ОДИНОЧНОЙ ВЕРСИИ
         // ============================================================
         function revealHint(type) {
             if (!film || guessed) return;
@@ -873,7 +873,7 @@
                 d: {
                     el: hDirector,
                     label: 'Режиссёр',
-                    value: omdb?.Director || film?.director || '—',
+                    value: omdb?.Director || '—',
                     field: fDirector,
                     prefix: '🎬 '
                 }
@@ -886,12 +886,49 @@
             h.field.textContent = h.prefix + h.value;
             h.el.textContent = '✅ ' + h.label;
             h.el.className = 'active';
+
+            // Синхронизируем подсказку с другими игроками
+            if (isConnected) {
+                sendToPeer('hint', { type: type, value: h.value, label: h.label, prefix: h.prefix });
+            }
         }
 
         // ПРИВЯЗКА КНОПОК ПОДСКАЗОК
         hRating.onclick = function() { revealHint('r'); };
         hYear.onclick = function() { revealHint('y'); };
         hDirector.onclick = function() { revealHint('d'); };
+
+        // Функция для применения подсказки от другого игрока
+        function applyHintFromPeer(data) {
+            if (!data) return;
+            const type = data.type;
+            const value = data.value;
+            const label = data.label;
+            const prefix = data.prefix;
+
+            if (hints[type]) return; // Уже показана
+
+            hints[type] = true;
+
+            const fieldMap = {
+                r: fRating,
+                y: fYear,
+                d: fDirector
+            };
+            const elMap = {
+                r: hRating,
+                y: hYear,
+                d: hDirector
+            };
+
+            if (fieldMap[type]) {
+                fieldMap[type].textContent = prefix + value;
+            }
+            if (elMap[type]) {
+                elMap[type].textContent = '✅ ' + label;
+                elMap[type].className = 'active';
+            }
+        }
 
         // ============================================================
         //  ЗАГРУЗКА ФИЛЬМА
@@ -963,7 +1000,6 @@
                                     id = s.filmId;
                                     movie = await kpFilm(id);
                                     omdbData = m;
-                                    // Сохраняем оригинальное название
                                     if (omdbData && omdbData.Title) {
                                         movie.originalTitle = omdbData.Title;
                                     }
@@ -994,13 +1030,6 @@
                 if (omdbData && omdbData.Title) {
                     film.allTitles.push(omdbData.Title);
                     film.originalTitle = omdbData.Title;
-                }
-                // Добавляем режиссёра для подсказки
-                if (omdbData && omdbData.Director) {
-                    film.director = omdbData.Director;
-                } else if (movie && movie.persons) {
-                    const dir = movie.persons.find(p => p.professionKey === 'DIRECTOR');
-                    if (dir) film.director = dir.nameRu || dir.nameEn;
                 }
 
                 showFilm(movie, omdbData);
@@ -1033,7 +1062,7 @@
         easyBtn.onclick = () => loadFilm('easy');
 
         // ============================================================
-        //  ПРОВЕРКА УГАДЫВАНИЯ — КАК В ОДИНОЧНОЙ ВЕРСИИ
+        //  ПРОВЕРКА УГАДЫВАНИЯ — КАК В ОДИНОЧНОЙ
         // ============================================================
         function checkGuess(guessText) {
             if (!film) return false;
@@ -1041,25 +1070,20 @@
             const guess = guessText.trim().toLowerCase();
             if (!guess) return false;
 
-            // Основные названия
             const nameRu = (film.nameRu || '').toLowerCase().trim();
             const nameEn = (film.nameEn || '').toLowerCase().trim();
             const altName = (film.alternativeName || '').toLowerCase().trim();
-
-            // Название из OMDb
             const omdbTitle = (omdb?.Title || '').toLowerCase().trim();
-
-            // Оригинальное название
             const originalTitle = (film.originalTitle || '').toLowerCase().trim();
 
-            // Проверка точных совпадений
+            // Точные совпадения
             if (guess === nameRu) return true;
             if (guess === nameEn) return true;
             if (guess === altName) return true;
             if (guess === omdbTitle) return true;
             if (guess === originalTitle) return true;
 
-            // Проверка вхождений (если длина больше 3)
+            // Вхождения (если длина больше 3)
             if (guess.length >= 3) {
                 if (nameRu.includes(guess)) return true;
                 if (nameEn.includes(guess)) return true;
@@ -1068,7 +1092,7 @@
                 if (originalTitle.includes(guess)) return true;
             }
 
-            // Проверка обратных вхождений
+            // Обратные вхождения
             if (nameRu.length >= 3 && guess.includes(nameRu)) return true;
             if (nameEn.length >= 3 && guess.includes(nameEn)) return true;
             if (altName.length >= 3 && guess.includes(altName)) return true;
@@ -1251,7 +1275,7 @@
         };
 
         // ============================================================
-        //  МУЛЬТИПЛЕЕР — НЕ ТРОГАЕМ
+        //  МУЛЬТИПЛЕЕР
         // ============================================================
 
         function syncGame() {
@@ -1261,7 +1285,8 @@
                 omdb: omdb,
                 filmId: filmId,
                 guessed: guessed,
-                players: players
+                players: players,
+                hints: hints
             };
             sendToPeer('sync', data);
         }
@@ -1454,6 +1479,39 @@
                             players = d.players;
                             updateOnline();
                         }
+                        // Синхронизация подсказок
+                        if (d.hints) {
+                            // Применяем подсказки от хоста
+                            for (const type in d.hints) {
+                                if (d.hints[type] && !hints[type]) {
+                                    // Грубо применяем все подсказки
+                                    hints[type] = true;
+                                    const fieldMap = { r: fRating, y: fYear, d: fDirector };
+                                    const elMap = { r: hRating, y: hYear, d: hDirector };
+                                    const labelMap = { r: 'Рейтинг', y: 'Год', d: 'Режиссёр' };
+                                    const prefixMap = { r: '⭐ ', y: '📅 ', d: '🎬 ' };
+                                    const valueMap = {
+                                        r: omdb?.imdbRating || film?.ratingImdb || film?.ratingKinopoisk || '—',
+                                        y: omdb?.Year || film?.year || '—',
+                                        d: omdb?.Director || '—'
+                                    };
+                                    if (fieldMap[type]) {
+                                        fieldMap[type].textContent = prefixMap[type] + valueMap[type];
+                                    }
+                                    if (elMap[type]) {
+                                        elMap[type].textContent = '✅ ' + labelMap[type];
+                                        elMap[type].className = 'active';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+                case 'hint':
+                    // Применяем подсказку от другого игрока
+                    if (data.data && !isHost) {
+                        applyHintFromPeer(data.data);
                     }
                     break;
 
@@ -1726,6 +1784,7 @@
         console.log('🎬 Угадай фильм — мультиплеер через PeerJS');
         console.log('📌 Код комнаты — 4 цифры');
         console.log('👤 Ваш ID:', myId);
+        console.log('💡 Подсказки синхронизируются между игроками');
     </script>
 </body>
 </html>
