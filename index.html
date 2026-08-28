@@ -516,9 +516,6 @@
         .guess-input-duel button.surrender-btn {
             background: #e74c3c;
         }
-        .guess-input-duel button.skip-timer-btn {
-            background: #6c7a8d;
-        }
         .timer-bar {
             background: #e9ecef;
             height: 8px;
@@ -916,6 +913,31 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
+
+        /* Отдельный блок для кнопки скипа */
+        .skip-timer-block {
+            display: flex;
+            justify-content: center;
+            margin: 8px 0;
+        }
+        .skip-timer-block button {
+            padding: 8px 24px;
+            border: none;
+            border-radius: 8px;
+            background: #6c7a8d;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+        }
+        .skip-timer-block button:hover {
+            background: #5a687a;
+        }
+        .skip-timer-block button:active {
+            transform: scale(0.97);
+        }
     </style>
 </head>
 <body>
@@ -1014,6 +1036,11 @@
                     </div>
                     <div id="timerText" style="text-align:center;font-size:14px;color:#888;margin-bottom:8px;">⏱️ Ожидание...</div>
 
+                    <!-- ОТДЕЛЬНЫЙ БЛОК ДЛЯ КНОПКИ СКИПА -->
+                    <div class="skip-timer-block">
+                        <button id="skipTimerBtn">⏭️ Скипнуть таймер</button>
+                    </div>
+
                     <div class="duel-frames" id="duelFrames">
                         <div class="frame-group">
                             <div class="group-title" id="myFilmTitle">Ваш фильм (для оппонента)</div>
@@ -1033,7 +1060,6 @@
                                 <button class="guess-btn" id="oppGuessBtn" disabled>Угадать</button>
                                 <button class="hint-btn" id="oppHintBtn" disabled>💡</button>
                                 <button class="surrender-btn" id="oppSurrenderBtn" disabled>🏳️</button>
-                                <button class="skip-timer-btn" id="oppSkipTimerBtn" disabled>⏭️</button>
                             </div>
                             <div id="oppGuessStatus" style="font-size:12px;color:#888;margin-top:4px;"></div>
                             <div id="oppPlayerStatus" class="player-status"></div>
@@ -1111,7 +1137,7 @@
     </script>
     <script>
         // ============================================================
-        //  РЕЖИМ ПОДСТАВА — ФИНАЛЬНАЯ ВЕРСИЯ
+        //  РЕЖИМ ПОДСТАВА — ПОЛНАЯ ПЕРЕПИСЬ
         // ============================================================
 
         const OMDB = 'https://www.omdbapi.com/';
@@ -1196,7 +1222,6 @@
         const oppGuessBtn = $('oppGuessBtn');
         const oppHintBtn = $('oppHintBtn');
         const oppSurrenderBtn = $('oppSurrenderBtn');
-        const oppSkipTimerBtn = $('oppSkipTimerBtn');
         const oppGuessStatus = $('oppGuessStatus');
         const myReadyStatus = $('myReadyStatus');
         const myPlayerStatus = $('myPlayerStatus');
@@ -1209,6 +1234,7 @@
         const finalMyScore = $('finalMyScore');
         const finalOppScore = $('finalOppScore');
         const newDuelBtn = $('newDuelBtn');
+        const skipTimerBtn = $('skipTimerBtn');
 
         // ---------- СОСТОЯНИЕ ----------
         let film = null,
@@ -1223,7 +1249,7 @@
             isConnected = false;
         let myId = 'p' + Date.now() + Math.random().toString(36).slice(2, 6);
 
-        // Duel state
+        // Duel state - полностью раздельные данные
         let duelMode = false;
         let duelState = {
             round: 0,
@@ -1244,7 +1270,8 @@
                 wrongAttempts: 0,
                 score: 0,
                 roundScore: 0,
-                guessHistory: []
+                guessHistory: [],
+                hintData: null
             },
             // Данные оппонента
             opp: {
@@ -1262,7 +1289,8 @@
                 wrongAttempts: 0,
                 score: 0,
                 roundScore: 0,
-                guessHistory: []
+                guessHistory: [],
+                hintData: null
             },
             timer: 120,
             timerInterval: null,
@@ -1272,7 +1300,8 @@
             roundEnded: false,
             showingResults: false,
             bothDone: false,
-            timerSkipped: false
+            timerSkipped: false,
+            roundStartTime: 0
         };
 
         // PeerJS
@@ -1445,6 +1474,33 @@
             }
             if (filmData.description) facts.push('📝 Описание: ' + filmData.description);
             return facts;
+        }
+
+        function getHintData(filmData) {
+            const director = getDirectorFromKP(filmData);
+            const year = filmData.year || '—';
+            const genres = filmData.genres ? filmData.genres.map(g => g.genre).join(', ') : '—';
+            const runtime = filmData.filmLength ? filmData.filmLength + ' мин' : '—';
+            const actors = filmData.persons ? filmData.persons
+                .filter(p => p.professionKey === 'ACTOR')
+                .slice(0, 5)
+                .map(p => p.nameRu || p.nameEn || '')
+                .filter(n => n)
+                .join(', ') : '—';
+            const rating = filmData.ratingImdb || filmData.ratingKinopoisk || '—';
+            const description = filmData.description || filmData.shortDescription || '—';
+            const countries = filmData.countries ? filmData.countries.map(c => c.country).join(', ') : '—';
+
+            return `
+                📅 Год: ${year}
+                🎭 Жанр: ${genres}
+                ⏱️ Длительность: ${runtime}
+                🎬 Режиссёр: ${director}
+                ⭐ Рейтинг: ${rating}
+                🌍 Страна: ${countries}
+                🎭 Актеры: ${actors}
+                📝 Описание: ${description}
+            `;
         }
 
         function showFilm(data) {
@@ -1831,12 +1887,14 @@
 
                 const media = await getFilmMedia(searchResult.filmId);
                 const facts = getInterestingFacts(filmData);
+                const hintData = getHintData(filmData);
 
                 duelState.my.film = filmData;
                 duelState.my.filmId = searchResult.filmId;
                 duelState.my.media = media;
                 duelState.my.filmName = filmData.nameRu || filmData.nameEn || 'Без названия';
                 duelState.my.facts = facts;
+                duelState.my.hintData = hintData;
                 duelState.my.chosen = true;
                 duelState.my.status = 'inpr';
 
@@ -1856,7 +1914,8 @@
                         filmId: duelState.my.filmId,
                         media: duelState.my.media,
                         name: duelState.my.filmName,
-                        facts: duelState.my.facts
+                        facts: duelState.my.facts,
+                        hintData: duelState.my.hintData
                     });
 
                     addChat('🎯 ' + myName + ' загадал фильм!', 'system');
@@ -2079,6 +2138,7 @@
             duelState.my.media = null;
             duelState.my.filmName = '';
             duelState.my.facts = [];
+            duelState.my.hintData = null;
             duelState.my.chosen = false;
             duelState.my.status = 'inpr';
             duelState.my.guessed = false;
@@ -2094,6 +2154,7 @@
             duelState.opp.media = null;
             duelState.opp.filmName = '';
             duelState.opp.facts = [];
+            duelState.opp.hintData = null;
             duelState.opp.chosen = false;
             duelState.opp.status = 'inpr';
             duelState.opp.guessed = false;
@@ -2113,7 +2174,6 @@
             oppGuessBtn.disabled = true;
             oppHintBtn.disabled = true;
             oppSurrenderBtn.disabled = true;
-            oppSkipTimerBtn.disabled = true;
             oppGuessStatus.textContent = '';
             myPlayerStatus.textContent = '';
             oppPlayerStatus.textContent = '';
@@ -2146,6 +2206,7 @@
             duelState.opp.media = data.media || { type: 'none', data: 'Медиа не найдены' };
             duelState.opp.filmName = data.name || 'Без названия';
             duelState.opp.facts = data.facts || [];
+            duelState.opp.hintData = data.hintData || null;
             duelState.opp.chosen = true;
             duelState.opp.status = 'inpr';
 
@@ -2166,7 +2227,6 @@
                 oppGuessBtn.disabled = false;
                 oppHintBtn.disabled = false;
                 oppSurrenderBtn.disabled = false;
-                oppSkipTimerBtn.disabled = false;
                 oppGuessInput.value = '';
                 oppGuessStatus.textContent = '';
 
@@ -2228,7 +2288,6 @@
             oppGuessBtn.disabled = false;
             oppHintBtn.disabled = false;
             oppSurrenderBtn.disabled = false;
-            oppSkipTimerBtn.disabled = false;
             oppGuessInput.value = '';
             oppGuessStatus.textContent = '';
             myPlayerStatus.textContent = '';
@@ -2339,11 +2398,25 @@
             endDuelRound();
         }
 
-        function handleSkipTimer() {
-            if (!duelMode || !duelState.roundActive || duelState.gameOver) return;
-            if (duelState.roundEnded) return;
+        // Кнопка скипа — всегда активна, всегда доступна
+        skipTimerBtn.onclick = function() {
+            if (!duelMode) {
+                setupFeedback.textContent = '❌ Режим Подстава не активен';
+                setupFeedback.className = 'feedback error';
+                return;
+            }
+            if (duelState.roundEnded || duelState.gameOver) {
+                setupFeedback.textContent = '⏳ Раунд уже завершён или игра окончена';
+                setupFeedback.className = 'feedback info';
+                return;
+            }
+            if (!duelState.roundActive) {
+                setupFeedback.textContent = '⏳ Раунд ещё не начался';
+                setupFeedback.className = 'feedback info';
+                return;
+            }
 
-            addChat('⏭️ <strong>' + myName + '</strong> пропустил таймер!', 'system');
+            addChat('⏭️ <strong>' + myName + '</strong> скипнул таймер!', 'system');
 
             sendToPeer('duel_skip_timer', {
                 player: 'me'
@@ -2351,11 +2424,9 @@
 
             if (!duelState.timerSkipped) {
                 duelState.timerSkipped = true;
-                forceRoundEnd('⏭️ Таймер пропущен');
+                forceRoundEnd('⏭️ Таймер скипнут');
             }
-        }
-
-        oppSkipTimerBtn.onclick = handleSkipTimer;
+        };
 
         // Проверка завершения раунда
         function checkBothDone() {
@@ -2412,7 +2483,6 @@
                 oppGuessBtn.disabled = true;
                 oppHintBtn.disabled = true;
                 oppSurrenderBtn.disabled = true;
-                oppSkipTimerBtn.disabled = true;
 
                 updatePlayerStatusUI('my');
 
@@ -2474,7 +2544,6 @@
                     oppGuessBtn.disabled = true;
                     oppHintBtn.disabled = true;
                     oppSurrenderBtn.disabled = true;
-                    oppSkipTimerBtn.disabled = true;
                     oppGuessStatus.textContent = '❌ Сдался. Фильм: "' + oppName + '"';
                     oppGuessStatus.style.color = '#e74c3c';
 
@@ -2535,7 +2604,6 @@
             oppGuessBtn.disabled = true;
             oppHintBtn.disabled = true;
             oppSurrenderBtn.disabled = true;
-            oppSkipTimerBtn.disabled = true;
 
             updatePlayerStatusUI('my');
 
@@ -2559,6 +2627,54 @@
         }
 
         oppSurrenderBtn.onclick = handleSurrender;
+
+        // Подсказка — только для меня, только локально
+        function useMyHint() {
+            if (!duelMode || !duelState.roundActive || duelState.gameOver) return;
+            if (duelState.my.status === 'done') {
+                setupFeedback.textContent = 'Вы уже завершили этот раунд!';
+                setupFeedback.className = 'feedback success';
+                return;
+            }
+            if (duelState.my.hintUsed) {
+                setupFeedback.textContent = '💡 Вы уже использовали подсказку в этом раунде.';
+                setupFeedback.className = 'feedback warning';
+                return;
+            }
+            if (duelState.roundEnded) return;
+
+            const hintData = duelState.opp.hintData;
+            if (!hintData) {
+                setupFeedback.textContent = '❌ Нет данных для подсказки';
+                setupFeedback.className = 'feedback error';
+                return;
+            }
+
+            duelState.my.hintUsed = true;
+
+            const hintDiv = document.createElement('div');
+            hintDiv.className = 'hint-card';
+            hintDiv.innerHTML = `
+                <div class="hint-title">💡 Подсказка ( -50 очков )</div>
+                <div class="hint-content">${hintData.replace(/\n/g, '<br>')}</div>
+                <div class="hint-cost">⚠️ -50 очков за подсказку</div>
+            `;
+
+            const parent = oppGuessInput.parentNode;
+            const existingHint = parent.querySelector('.hint-card');
+            if (existingHint) existingHint.remove();
+            parent.insertBefore(hintDiv, oppGuessInput);
+
+            setupFeedback.textContent = '💡 Подсказка использована! -50 очков к штрафу.';
+            setupFeedback.className = 'feedback warning';
+            oppHintBtn.disabled = true;
+
+            updatePlayerStatusUI('my');
+
+            addChat('💡 ' + myName + ' использовал подсказку! (-50 очков штрафа)', 'system');
+        }
+
+        oppHintBtn.onclick = useMyHint;
 
         function checkDuelGuess(guess, filmData) {
             if (!filmData) return false;
@@ -2640,6 +2756,8 @@
             duelState.opp.filmName = '';
             duelState.my.facts = [];
             duelState.opp.facts = [];
+            duelState.my.hintData = null;
+            duelState.opp.hintData = null;
             duelState.my.status = 'inpr';
             duelState.opp.status = 'inpr';
             duelState.my.guessed = false;
@@ -2671,7 +2789,6 @@
             oppGuessBtn.disabled = true;
             oppHintBtn.disabled = true;
             oppSurrenderBtn.disabled = true;
-            oppSkipTimerBtn.disabled = true;
             oppGuessStatus.textContent = '';
             myPlayerStatus.textContent = '';
             oppPlayerStatus.textContent = '';
@@ -2725,85 +2842,6 @@
                 winner: winner
             });
         }
-
-        // Подсказка
-        function useOppHint() {
-            if (!duelMode || !duelState.roundActive || duelState.gameOver) return;
-            if (duelState.my.status === 'done') {
-                setupFeedback.textContent = 'Вы уже завершили этот раунд!';
-                setupFeedback.className = 'feedback success';
-                return;
-            }
-            if (duelState.my.hintUsed) {
-                setupFeedback.textContent = '💡 Вы уже использовали подсказку в этом раунде.';
-                setupFeedback.className = 'feedback warning';
-                return;
-            }
-            if (duelState.roundEnded) return;
-
-            const filmData = duelState.opp.film;
-            if (!filmData) {
-                setupFeedback.textContent = '❌ Нет данных для подсказки';
-                setupFeedback.className = 'feedback error';
-                return;
-            }
-
-            duelState.my.hintUsed = true;
-
-            const director = getDirectorFromKP(filmData);
-            const year = filmData.year || '—';
-            const genres = filmData.genres ? filmData.genres.map(g => g.genre).join(', ') : '—';
-            const runtime = filmData.filmLength ? filmData.filmLength + ' мин' : '—';
-            const actors = filmData.persons ? filmData.persons
-                .filter(p => p.professionKey === 'ACTOR')
-                .slice(0, 5)
-                .map(p => p.nameRu || p.nameEn || '')
-                .filter(n => n)
-                .join(', ') : '—';
-            const rating = filmData.ratingImdb || filmData.ratingKinopoisk || '—';
-            const description = filmData.description || filmData.shortDescription || '—';
-            const countries = filmData.countries ? filmData.countries.map(c => c.country).join(', ') : '—';
-
-            const hintText = `
-                📅 Год: ${year}
-                🎭 Жанр: ${genres}
-                ⏱️ Длительность: ${runtime}
-                🎬 Режиссёр: ${director}
-                ⭐ Рейтинг: ${rating}
-                🌍 Страна: ${countries}
-                🎭 Актеры: ${actors}
-                📝 Описание: ${description}
-            `;
-
-            const hintDiv = document.createElement('div');
-            hintDiv.className = 'hint-card';
-            hintDiv.innerHTML = `
-                <div class="hint-title">💡 Подсказка ( -50 очков )</div>
-                <div class="hint-content">${hintText.replace(/\n/g, '<br>')}</div>
-                <div class="hint-cost">⚠️ -50 очков за подсказку</div>
-            `;
-
-            const parent = oppGuessInput.parentNode;
-            const existingHint = parent.querySelector('.hint-card');
-            if (existingHint) existingHint.remove();
-            parent.insertBefore(hintDiv, oppGuessInput);
-
-            setupFeedback.textContent = '💡 Подсказка использована! -50 очков к штрафу.';
-            setupFeedback.className = 'feedback warning';
-            oppHintBtn.disabled = true;
-
-            updatePlayerStatusUI('my');
-
-            sendToPeer('duel_hint', {
-                hint: hintText,
-                score: duelState.my.score,
-                status: 'inpr'
-            });
-
-            addChat('💡 ' + myName + ' использовал подсказку! (-50 очков штрафа)', 'system');
-        }
-
-        oppHintBtn.onclick = useOppHint;
 
         // ============================================================
         //  ОБРАБОТЧИКИ DUEL PEER
@@ -2879,7 +2917,6 @@
                         oppGuessBtn.disabled = false;
                         oppHintBtn.disabled = false;
                         oppSurrenderBtn.disabled = false;
-                        oppSkipTimerBtn.disabled = false;
                         oppGuessInput.value = '';
                         oppGuessStatus.textContent = '';
                         myPlayerStatus.textContent = '';
@@ -2900,8 +2937,8 @@
                     if (!isHost && data.data) {
                         if (!duelState.timerSkipped) {
                             duelState.timerSkipped = true;
-                            addChat('⏭️ Противник пропустил таймер!', 'system');
-                            forceRoundEnd('⏭️ Таймер пропущен оппонентом');
+                            addChat('⏭️ Противник скипнул таймер!', 'system');
+                            forceRoundEnd('⏭️ Таймер скипнут оппонентом');
                         }
                     }
                     break;
@@ -2916,6 +2953,7 @@
                                 duelState.opp.score = data.data.score || duelState.opp.score + 100;
                                 duelState.opp.roundScore = data.data.roundScore || 100;
                                 duelState.opp.wrongAttempts = data.data.wrongAttempts || 0;
+                                duelState.opp.hintUsed = data.data.hintUsed || false;
                                 myReadyStatus.className = 'ready-status guessed';
                                 myReadyStatus.textContent = '❌ Оппонент угадал!';
                                 addChat('🎯 Противник угадал ваш фильм!', 'system');
@@ -2934,7 +2972,6 @@
                                 addChat('❌ Противник: ' + data.data.guess + ' — не угадал', '');
                             }
                             duelState.opp.attempts = (data.data.attempts) || duelState.opp.attempts + 1;
-                            duelState.opp.hintUsed = data.data.hintUsed || false;
                             updatePlayerStatusUI('opp');
                             updateDuelUI();
 
@@ -2950,6 +2987,7 @@
                                 duelState.my.score = data.data.score || duelState.my.score + 100;
                                 duelState.my.roundScore = data.data.roundScore || 100;
                                 duelState.my.wrongAttempts = data.data.wrongAttempts || 0;
+                                duelState.my.hintUsed = data.data.hintUsed || false;
                                 oppGuessStatus.textContent = '✅ Вы угадали! +' + (data.data.roundScore || 0) + ' очков';
                                 oppGuessStatus.style.color = '#2ecc71';
                                 addChat('🎯 ' + myName + ' угадал фильм!', 'system');
@@ -2962,7 +3000,6 @@
                                 duelState.my.wrongAttempts = data.data.wrongAttempts || 0;
                             }
                             duelState.my.attempts = (data.data.attempts) || duelState.my.attempts + 1;
-                            duelState.my.hintUsed = data.data.hintUsed || false;
                             updatePlayerStatusUI('my');
                             updateDuelUI();
 
@@ -2991,26 +3028,6 @@
                             duelState.bothDone = true;
                             endDuelRound();
                         }
-                    }
-                    break;
-
-                case 'duel_hint':
-                    if (data.data && !isHost) {
-                        duelState.opp.hintUsed = true;
-                        const hintDiv = document.createElement('div');
-                        hintDiv.className = 'hint-card';
-                        hintDiv.innerHTML = `
-                            <div class="hint-title">💡 Подсказка оппонента ( -50 очков )</div>
-                            <div class="hint-content">${data.data.hint.replace(/\n/g, '<br>')}</div>
-                            <div class="hint-cost">⚠️ -50 очков за подсказку</div>
-                        `;
-                        const parent = oppGuessInput.parentNode;
-                        const existingHint = parent.querySelector('.hint-card');
-                        if (existingHint) existingHint.remove();
-                        parent.insertBefore(hintDiv, oppGuessInput);
-                        oppHintBtn.disabled = true;
-                        updatePlayerStatusUI('opp');
-                        addChat('💡 Оппонент использовал подсказку! (-50 очков штрафа)', 'system');
                     }
                     break;
 
@@ -3608,7 +3625,7 @@
             }, 500);
         };
 
-        console.log('🎬 Угадай фильм — режим ПОДСТАВА (финальная версия)');
+        console.log('🎬 Угадай фильм — режим ПОДСТАВА (ПОЛНАЯ ПЕРЕПИСЬ)');
         console.log('👤 Ваш ID:', myId);
         console.log('🎯 Для включения подставы нажмите кнопку "Подстава" (только хост)');
     </script>
