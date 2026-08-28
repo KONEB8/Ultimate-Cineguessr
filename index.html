@@ -1153,9 +1153,8 @@
     <script>
         // ============================================================
         //  РЕЖИМ ПОДСТАВА — ИСПРАВЛЕННЫЙ
-        //  1. Кнопка Подстава обнуляет счётчик фильмов
-        //  2. Подтверждение у хоста активно только после гостя
-        //  3. Подсказки: оба получают сообщение -50
+        //  1. Подсказка: -50, не -100
+        //  2. Хост видит подсказку гостя
         // ============================================================
 
         const OMDB = 'https://www.omdbapi.com/';
@@ -1323,7 +1322,7 @@
             filmHistory: [],
             scoreLog: {},
             oppNameSet: false,
-            oppChosenConfirmed: false // Для блокировки кнопки у хоста
+            oppChosenConfirmed: false
         };
 
         // PeerJS
@@ -2209,7 +2208,6 @@
                 setupModeBtn.textContent = '❌ Выйти из Подставы';
                 setupModeBtn.className = 'red';
 
-                // СБРАСЫВАЕМ СЧЁТЧИК ФИЛЬМОВ
                 duelState.totalFilms = 0;
                 duelState.filmHistory = [];
                 duelState.scoreLog = {};
@@ -2311,7 +2309,6 @@
 
             document.querySelectorAll('.hint-card').forEach(el => el.remove());
 
-            // Сбрасываем состояние кнопки у хоста
             if (isHost) {
                 modalConfirmBtn.disabled = true;
                 modalStatus.textContent = '⏳ Ждите, пока оппонент загадает...';
@@ -2334,7 +2331,6 @@
             duelState.opp.status = 'inpr';
             duelState.oppNameSet = true;
 
-            // Гость подтвердил выбор — разблокируем кнопку у хоста
             duelState.oppChosenConfirmed = true;
             if (isHost) {
                 modalConfirmBtn.disabled = false;
@@ -2346,7 +2342,6 @@
             addChatMessage('🎯 ' + duelState.opp.playerName + ' загадал фильм!', 'system');
             checkBothChosen();
 
-            // Синхронизируем состояние кнопки
             if (isConnected) {
                 sendToPeer('sync_confirm_state', {
                     oppChosenConfirmed: true
@@ -2763,7 +2758,7 @@
 
         oppSurrenderBtn.onclick = handleSurrender;
 
-        // ПОДСКАЗКА — оба игрока получают сообщение -50
+        // ПОДСКАЗКА — ТОЛЬКО ОДИН РАЗ ВЫЗЫВАЕТСЯ updateScoreLog
         function useMyHint() {
             if (!duelMode || !duelState.roundActive || duelState.gameOver) return;
             if (duelState.my.status === 'done') {
@@ -2807,8 +2802,8 @@
 
             updatePlayerStatusUI('my');
 
-            // ОБА ИГРОКА ПОЛУЧАЮТ СООБЩЕНИЕ -50
-            // Отправляем своему оппоненту
+            // ТОЛЬКО ОДИН РАЗ обновляем лог через addChatMessage
+            // Отправляем оппоненту
             if (isConnected) {
                 sendToPeer('duel_hint', {
                     player: 'me',
@@ -2816,7 +2811,7 @@
                     playerName: myName
                 });
             }
-            // И добавляем себе в чат
+            // И добавляем себе в чат (addChatMessage сам вызовет updateScoreLog)
             addChatMessage('💡 ' + myName + ' использовал подсказку!', '', myName, penalty);
         }
 
@@ -3215,11 +3210,12 @@
                     break;
 
                 case 'duel_hint':
-                    if (data.data && !isHost) {
-                        // Оппонент использовал подсказку — оба получают сообщение
+                    if (data.data) {
+                        // УБРАНО УСЛОВИЕ !isHost
+                        // Теперь оба игрока получают сообщение о подсказке
                         if (data.data.scoreChange !== undefined && data.data.playerName) {
-                            updateScoreLog(data.data.playerName, data.data.scoreChange);
-                            // Добавляем в чат сообщение от оппонента
+                            // Обновляем лог через addChatMessage, чтобы избежать двойного вызова
+                            // Просто добавляем сообщение в чат
                             addChatMessage('💡 ' + data.data.playerName + ' использовал подсказку!', '', data.data
                                 .playerName, data.data.scoreChange);
                         }
@@ -3838,8 +3834,6 @@
 
             duelState.my.score = 0;
             duelState.opp.score = 0;
-            // Счётчик фильмов НЕ СБРАСЫВАЕМ при новой игре, только при кнопке Подстава
-            // duelState.totalFilms = 0; // УДАЛЕНО!
             duelState.scoreLog = {};
 
             startDuelSetup();
