@@ -768,8 +768,8 @@
             color: #f39c12;
         }
 
-        /* Экран завершения раунда */
-        .round-result-overlay {
+        /* Экран итогов */
+        .result-overlay {
             display: none;
             position: fixed;
             top: 0;
@@ -782,110 +782,96 @@
             align-items: center;
             animation: fadeIn 0.4s ease;
         }
-        .round-result-overlay.active {
+        .result-overlay.active {
             display: flex;
         }
-        .round-result-content {
+        .result-content {
             background: #fff;
             border-radius: 20px;
             padding: 32px 40px;
-            max-width: 700px;
+            max-width: 800px;
             width: 95%;
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
             animation: slideUp 0.4s ease;
         }
-        .round-result-content h2 {
+        .result-content h2 {
             text-align: center;
             font-size: 26px;
             margin-bottom: 16px;
             color: #1a1a2e;
         }
-        .round-result-content .result-player {
+        .result-content .result-player {
             background: #f8f9fa;
             border-radius: 12px;
             padding: 12px 16px;
             margin-bottom: 12px;
             border-left: 4px solid #3498db;
         }
-        .round-result-content .result-player.me {
+        .result-content .result-player.me {
             border-left-color: #2ecc71;
         }
-        .round-result-content .result-player .player-name {
+        .result-content .result-player .player-name {
             font-weight: 700;
             font-size: 16px;
         }
-        .round-result-content .result-player .player-score {
+        .result-content .result-player .player-score {
             font-size: 20px;
             font-weight: 700;
             float: right;
         }
-        .round-result-content .result-player .player-score.correct {
+        .result-content .result-player .player-score.correct {
             color: #2ecc71;
         }
-        .round-result-content .result-player .player-score.wrong {
+        .result-content .result-player .player-score.wrong {
             color: #e74c3c;
         }
-        .round-result-content .result-player .player-details {
+        .result-content .result-player .player-details {
             font-size: 13px;
             color: #555;
             margin-top: 4px;
         }
-        .round-result-content .result-player .player-guesses {
+        .result-content .result-player .player-guesses {
             font-size: 12px;
             color: #888;
             margin-top: 2px;
         }
-        .round-result-content .result-player .player-guesses .correct-guess {
+        .result-content .result-player .player-guesses .correct-guess {
             color: #2ecc71;
         }
-        .round-result-content .result-player .player-guesses .wrong-guess {
+        .result-content .result-player .player-guesses .wrong-guess {
             color: #e74c3c;
         }
-        .round-result-content .result-films {
+        .result-content .result-films {
             background: #f0f2f5;
             border-radius: 8px;
             padding: 12px;
             margin: 12px 0;
             font-size: 14px;
         }
-        .round-result-content .result-films .film-item {
+        .result-content .result-films .film-item {
             margin: 6px 0;
             padding: 4px 8px;
             background: #fff;
             border-radius: 4px;
         }
-        .round-result-content .result-films .film-item .label {
+        .result-content .result-films .film-item .label {
             font-weight: 600;
         }
-        .round-result-content .result-films .film-item .name {
+        .result-content .result-films .film-item .name {
             color: #2ecc71;
         }
-        .round-result-content .result-facts {
-            background: #f0f2f5;
-            border-radius: 8px;
-            padding: 12px;
-            margin: 12px 0;
-            font-size: 13px;
+        .result-content .result-films .film-item .author {
+            color: #888;
+            font-size: 12px;
         }
-        .round-result-content .result-facts .fact-item {
-            margin: 4px 0;
-            padding: 4px 8px;
-            background: #fff;
-            border-radius: 4px;
-            border-left: 3px solid #f39c12;
-        }
-        .round-result-content .result-facts .fact-item .fact-label {
-            font-weight: 600;
-            color: #f39c12;
-        }
-        .round-result-content .result-buttons {
+        .result-content .result-buttons {
             display: flex;
             gap: 10px;
             margin-top: 16px;
         }
-        .round-result-content .result-buttons button {
+        .result-content .result-buttons button {
             flex: 1;
             padding: 12px;
             border: none;
@@ -895,23 +881,67 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-        .round-result-content .result-buttons .btn-next {
+        .result-content .result-buttons .btn-close {
             background: #2ecc71;
             color: #fff;
         }
-        .round-result-content .result-buttons .btn-next:hover {
+        .result-content .result-buttons .btn-close:hover {
             background: #27ae60;
         }
-        .round-result-content .result-buttons .btn-close {
-            background: #e74c3c;
+
+        /* Инфо-панель под чатом */
+        .info-panel {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #e4e6eb;
+            padding: 12px 14px;
+            margin-top: 12px;
+        }
+        .info-panel .info-line {
+            font-size: 14px;
+            padding: 4px 0;
+            border-bottom: 1px solid #f0f2f5;
+        }
+        .info-panel .info-line:last-child {
+            border-bottom: none;
+        }
+        .info-panel .info-line .label {
+            font-weight: 600;
+        }
+        .info-panel .info-line .value {
+            color: #ff6b35;
+            font-weight: 700;
+        }
+        .info-panel .info-line .player-item {
+            display: inline-block;
+            margin-right: 12px;
+        }
+        .info-panel .info-line .player-item .pname {
+            font-weight: 500;
+        }
+        .info-panel .info-line .player-item .pscore {
+            color: #2ecc71;
+            font-weight: 700;
+        }
+        .info-panel .info-line .player-item .pnum {
+            color: #888;
+            font-size: 12px;
+        }
+        .info-panel .info-btn {
+            width: 100%;
+            padding: 8px;
+            margin-top: 8px;
+            border: none;
+            border-radius: 8px;
+            background: #9b59b6;
             color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
         }
-        .round-result-content .result-buttons .btn-close:hover {
-            background: #c0392b;
-        }
-        .round-result-content .result-buttons .btn-next:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        .info-panel .info-btn:hover {
+            background: #8e44ad;
         }
 
         /* Отдельный блок для кнопки скипа */
@@ -1018,25 +1048,13 @@
             <!-- Режим Подстава -->
             <div id="setupMode" class="hidden">
                 <div class="card setup-area">
-                    <div class="round-info" id="roundInfo">🎯 Раунд 1 из 3</div>
+                    <div class="round-info" id="roundInfo">🎯 Режим ПОДСТАВА</div>
                     
-                    <div class="score-display" id="scoreDisplay">
-                        <div class="score-item">
-                            <div class="score-value" id="myScoreDuel">0</div>
-                            <div class="score-label" id="myScoreLabel">Вы</div>
-                        </div>
-                        <div class="score-item">
-                            <div class="score-value" id="oppScoreDuel">0</div>
-                            <div class="score-label" id="oppScoreLabel">Противник</div>
-                        </div>
-                    </div>
-
                     <div class="timer-bar">
                         <div class="fill" id="timerFill" style="width:100%"></div>
                     </div>
                     <div id="timerText" style="text-align:center;font-size:14px;color:#888;margin-bottom:8px;">⏱️ Ожидание...</div>
 
-                    <!-- ОТДЕЛЬНЫЙ БЛОК ДЛЯ КНОПКИ СКИПА -->
                     <div class="skip-timer-block">
                         <button id="skipTimerBtn">⏭️ Скипнуть таймер</button>
                     </div>
@@ -1086,18 +1104,33 @@
             </div>
         </div>
 
-        <!-- Чат -->
-        <div class="chat-container">
-            <div class="chat-header">
-                💬 Чат
-                <span id="onlineCount">👤 0</span>
+        <!-- Чат + Инфо-панель -->
+        <div>
+            <div class="chat-container">
+                <div class="chat-header">
+                    💬 Чат
+                    <span id="onlineCount">👤 0</span>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="msg system">💡 Создайте или войдите в комнату</div>
+                </div>
+                <div class="chat-input">
+                    <input type="text" id="chatInput" placeholder="Сообщение..." disabled>
+                    <button id="chatSend" disabled>📤</button>
+                </div>
             </div>
-            <div class="chat-messages" id="chatMessages">
-                <div class="msg system">💡 Создайте или войдите в комнату</div>
-            </div>
-            <div class="chat-input">
-                <input type="text" id="chatInput" placeholder="Сообщение..." disabled>
-                <button id="chatSend" disabled>📤</button>
+
+            <!-- ИНФО-ПАНЕЛЬ -->
+            <div class="info-panel" id="infoPanel">
+                <div class="info-line">
+                    <span class="label">🎬 Загадано фильмов:</span>
+                    <span class="value" id="totalFilmsCount">0</span>
+                </div>
+                <div class="info-line" id="playersScores">
+                    <span class="label">👤 Игроки:</span>
+                    <span id="playersList">—</span>
+                </div>
+                <button class="info-btn" id="resultsBtn">📊 Подвести итоги</button>
             </div>
         </div>
     </div>
@@ -1119,15 +1152,13 @@
         </div>
     </div>
 
-    <!-- ЭКРАН РЕЗУЛЬТАТОВ РАУНДА -->
-    <div class="round-result-overlay" id="roundResultOverlay">
-        <div class="round-result-content">
-            <h2 id="resultTitle">🏁 Раунд 1 завершён!</h2>
+    <!-- ЭКРАН ИТОГОВ -->
+    <div class="result-overlay" id="resultOverlay">
+        <div class="result-content">
+            <h2 id="resultTitle">📊 Итоги игры</h2>
             <div id="resultPlayers"></div>
             <div class="result-films" id="resultFilms"></div>
-            <div class="result-facts" id="resultFacts"></div>
             <div class="result-buttons">
-                <button class="btn-next" id="resultNextBtn">▶ Следующий раунд</button>
                 <button class="btn-close" id="resultCloseBtn">✖ Закрыть</button>
             </div>
         </div>
@@ -1137,7 +1168,7 @@
     </script>
     <script>
         // ============================================================
-        //  РЕЖИМ ПОДСТАВА — ПОЛНАЯ ПЕРЕПИСЬ
+        //  РЕЖИМ ПОДСТАВА — БЕЗ РАУНДОВ
         // ============================================================
 
         const OMDB = 'https://www.omdbapi.com/';
@@ -1195,22 +1226,21 @@
         const modalCancelBtn = $('modalCancelBtn');
 
         // Result overlay
-        const resultOverlay = $('roundResultOverlay');
+        const resultOverlay = $('resultOverlay');
         const resultTitle = $('resultTitle');
         const resultPlayers = $('resultPlayers');
         const resultFilms = $('resultFilms');
-        const resultFacts = $('resultFacts');
-        const resultNextBtn = $('resultNextBtn');
         const resultCloseBtn = $('resultCloseBtn');
+
+        // Info panel
+        const totalFilmsCount = $('totalFilmsCount');
+        const playersList = $('playersList');
+        const resultsBtn = $('resultsBtn');
 
         // Duel elements
         const setupMode = $('setupMode');
         const normalMode = $('normalMode');
         const roundInfo = $('roundInfo');
-        const myScoreDuel = $('myScoreDuel');
-        const oppScoreDuel = $('oppScoreDuel');
-        const myScoreLabel = $('myScoreLabel');
-        const oppScoreLabel = $('oppScoreLabel');
         const timerFill = $('timerFill');
         const timerText = $('timerText');
         const duelFrames = $('duelFrames');
@@ -1248,12 +1278,11 @@
             isHost = false,
             isConnected = false;
         let myId = 'p' + Date.now() + Math.random().toString(36).slice(2, 6);
+        let playerNumber = 1;
 
-        // Duel state - полностью раздельные данные
+        // Duel state - без раундов
         let duelMode = false;
         let duelState = {
-            round: 0,
-            maxRounds: 3,
             // Мои данные
             my: {
                 film: null,
@@ -1271,7 +1300,8 @@
                 score: 0,
                 roundScore: 0,
                 guessHistory: [],
-                hintData: null
+                hintData: null,
+                playerNumber: 1
             },
             // Данные оппонента
             opp: {
@@ -1290,7 +1320,8 @@
                 score: 0,
                 roundScore: 0,
                 guessHistory: [],
-                hintData: null
+                hintData: null,
+                playerNumber: 2
             },
             timer: 120,
             timerInterval: null,
@@ -1301,7 +1332,9 @@
             showingResults: false,
             bothDone: false,
             timerSkipped: false,
-            roundStartTime: 0
+            totalFilms: 0,
+            filmHistory: [],
+            playersInfo: {}
         };
 
         // PeerJS
@@ -1897,6 +1930,7 @@
                 duelState.my.hintData = hintData;
                 duelState.my.chosen = true;
                 duelState.my.status = 'inpr';
+                duelState.my.playerNumber = playerNumber;
 
                 modalStatus.className = 'modal-status success';
                 modalStatus.textContent = '✅ Фильм выбран! "' + duelState.my.filmName + '"';
@@ -1915,7 +1949,8 @@
                         media: duelState.my.media,
                         name: duelState.my.filmName,
                         facts: duelState.my.facts,
-                        hintData: duelState.my.hintData
+                        hintData: duelState.my.hintData,
+                        playerNumber: playerNumber
                     });
 
                     addChat('🎯 ' + myName + ' загадал фильм!', 'system');
@@ -1940,143 +1975,148 @@
         });
 
         // ============================================================
-        //  ЭКРАН РЕЗУЛЬТАТОВ РАУНДА
+        //  ИНФО-ПАНЕЛЬ
         // ============================================================
 
-        function showRoundResults() {
+        function updateInfoPanel() {
+            // Общее количество загаданных фильмов
+            totalFilmsCount.textContent = duelState.totalFilms || 0;
+
+            // Список игроков с очками
+            const playersData = {};
+            if (duelState.my.chosen || duelState.my.status === 'done') {
+                playersData[myName] = {
+                    score: duelState.my.score,
+                    number: duelState.my.playerNumber || 1,
+                    status: duelState.my.status
+                };
+            }
+            if (duelState.opp.chosen || duelState.opp.status === 'done') {
+                const oppName = 'Противник';
+                playersData[oppName] = {
+                    score: duelState.opp.score,
+                    number: duelState.opp.playerNumber || 2,
+                    status: duelState.opp.status
+                };
+            }
+
+            let playersHtml = '';
+            const sorted = Object.entries(playersData).sort((a, b) => a[1].number - b[1].number);
+            sorted.forEach(([name, data]) => {
+                const statusIcon = data.status === 'done' ? '✅' : '⏳';
+                playersHtml +=
+                    `<span class="player-item"><span class="pnum">#${data.number}</span> <span class="pname">${name}</span> <span class="pscore">${data.score}</span> ${statusIcon}</span>`;
+            });
+
+            if (playersHtml) {
+                playersList.innerHTML = playersHtml;
+            } else {
+                playersList.textContent = '—';
+            }
+
+            // Автоматический показ итогов при 6 фильмах
+            if (duelState.totalFilms >= 6 && !duelState.showingResults && !duelState.gameOver) {
+                setTimeout(() => {
+                    showResults();
+                }, 500);
+            }
+        }
+
+        // ============================================================
+        //  ЭКРАН ИТОГОВ
+        // ============================================================
+
+        function showResults() {
             if (duelState.showingResults) return;
             duelState.showingResults = true;
 
-            const roundNum = duelState.round;
-            const roundText = roundNum === 1 ? 'ПЕРВЫЙ' : roundNum === 2 ? 'ВТОРОЙ' : 'ТРЕТИЙ';
-            resultTitle.textContent = '🏁 ' + roundText + ' РАУНД завершён!';
+            resultTitle.textContent = '📊 Итоги игры';
 
             // Информация об игроках
             let playersHtml = '';
 
-            // Я
-            const myScore = duelState.my.roundScore || 0;
-            const myCorrect = duelState.my.guessed;
-            const myGuesses = duelState.my.guessHistory || [];
-            const myHintUsed = duelState.my.hintUsed;
-            let myStatusText = '';
-            if (duelState.my.status === 'done') {
-                if (myCorrect) myStatusText = '✅ Угадал!';
-                else if (duelState.my.surrendered) myStatusText = '🏳️ Сдался';
-                else myStatusText = '⏰ Время вышло';
-            } else {
-                myStatusText = '⏳ Не завершён';
-            }
+            const myData = {
+                name: myName,
+                score: duelState.my.score,
+                number: duelState.my.playerNumber || 1,
+                status: duelState.my.status,
+                guessed: duelState.my.guessed,
+                surrendered: duelState.my.surrendered,
+                hintUsed: duelState.my.hintUsed,
+                guessHistory: duelState.my.guessHistory || []
+            };
 
-            let myGuessText = myGuesses.length > 0 ? myGuesses.map(g =>
-                '<span class="' + (g.correct ? 'correct-guess' : 'wrong-guess') + '">"' + g.text + '"</span>'
-            ).join(', ') : '—';
+            const oppData = {
+                name: 'Противник',
+                score: duelState.opp.score,
+                number: duelState.opp.playerNumber || 2,
+                status: duelState.opp.status,
+                guessed: duelState.opp.guessed,
+                surrendered: duelState.opp.surrendered,
+                hintUsed: duelState.opp.hintUsed,
+                guessHistory: duelState.opp.guessHistory || []
+            };
 
-            playersHtml += `
-                <div class="result-player me">
-                    <div>
-                        <span class="player-name">${myName}</span>
-                        <span class="player-score ${myCorrect ? 'correct' : 'wrong'}">${myScore} очков</span>
+            const allPlayers = [myData, oppData].filter(p => p.status === 'done' || p.guessHistory.length > 0);
+
+            allPlayers.forEach(p => {
+                const isMe = p.name === myName;
+                const statusText = p.guessed ? '✅ Угадал!' : p.surrendered ? '🏳️ Сдался' : '⏰ Время вышло';
+                const guessText = p.guessHistory.length > 0 ? p.guessHistory.map(g =>
+                    '<span class="' + (g.correct ? 'correct-guess' : 'wrong-guess') + '">"' + g.text + '"</span>'
+                ).join(', ') : '—';
+
+                playersHtml += `
+                    <div class="result-player ${isMe ? 'me' : ''}">
+                        <div>
+                            <span class="player-name">#${p.number} ${p.name}</span>
+                            <span class="player-score ${p.guessed ? 'correct' : 'wrong'}">${p.score} очков</span>
+                        </div>
+                        <div class="player-details">${statusText} ${p.hintUsed ? '💡 Подсказка использована' : ''}</div>
+                        <div class="player-guesses">Попытки: ${guessText}</div>
                     </div>
-                    <div class="player-details">${myStatusText} ${myHintUsed ? '💡 Подсказка использована' : ''}</div>
-                    <div class="player-guesses">Попытки: ${myGuessText}</div>
-                </div>
-            `;
+                `;
+            });
 
-            // Оппонент
-            const oppScore = duelState.opp.roundScore || 0;
-            const oppCorrect = duelState.opp.guessed;
-            const oppGuesses = duelState.opp.guessHistory || [];
-            const oppHintUsed = duelState.opp.hintUsed;
-            let oppStatusText = '';
-            if (duelState.opp.status === 'done') {
-                if (oppCorrect) oppStatusText = '✅ Угадал!';
-                else if (duelState.opp.surrendered) oppStatusText = '🏳️ Сдался';
-                else oppStatusText = '⏰ Время вышло';
+            resultPlayers.innerHTML = playersHtml || '<div style="text-align:center;color:#888;">Нет данных</div>';
+
+            // Список всех фильмов
+            let filmsHtml = '<div style="font-weight:600;margin-bottom:6px;">🎬 Список загаданных фильмов:</div>';
+            const filmHistory = duelState.filmHistory || [];
+            if (filmHistory.length) {
+                filmHistory.forEach((f, idx) => {
+                    filmsHtml += `
+                        <div class="film-item">
+                            <span class="label">#${idx + 1}</span>
+                            <span class="name">${f.name}</span>
+                            <span class="author">— ${f.author}</span>
+                        </div>
+                    `;
+                });
             } else {
-                oppStatusText = '⏳ Не завершён';
+                filmsHtml += '<div style="color:#888;">Фильмы не загаданы</div>';
             }
-
-            let oppGuessText = oppGuesses.length > 0 ? oppGuesses.map(g =>
-                '<span class="' + (g.correct ? 'correct-guess' : 'wrong-guess') + '">"' + g.text + '"</span>'
-            ).join(', ') : '—';
-
-            playersHtml += `
-                <div class="result-player">
-                    <div>
-                        <span class="player-name">Противник</span>
-                        <span class="player-score ${oppCorrect ? 'correct' : 'wrong'}">${oppScore} очков</span>
-                    </div>
-                    <div class="player-details">${oppStatusText} ${oppHintUsed ? '💡 Подсказка использована' : ''}</div>
-                    <div class="player-guesses">Попытки: ${oppGuessText}</div>
-                </div>
-            `;
-
-            resultPlayers.innerHTML = playersHtml;
-
-            // Информация о фильмах
-            let filmsHtml = '';
-            filmsHtml += `
-                <div class="film-item"><span class="label">🎬 Ваш фильм:</span> <span class="name">${duelState.my.filmName || '—'}</span></div>
-                <div class="film-item"><span class="label">🎬 Фильм оппонента:</span> <span class="name">${duelState.opp.filmName || '—'}</span></div>
-            `;
             resultFilms.innerHTML = filmsHtml;
 
-            // Интересные факты
-            let factsHtml = '<div style="font-weight:600;margin-bottom:6px;">📌 Интересные факты:</div>';
-            const myFacts = duelState.my.facts || [];
-            const oppFacts = duelState.opp.facts || [];
-
-            if (myFacts.length) {
-                factsHtml += `<div style="margin-bottom:4px;font-weight:500;">${myName}:</div>`;
-                myFacts.forEach(f => {
-                    factsHtml += `<div class="fact-item"><span class="fact-label">•</span> ${f}</div>`;
-                });
-            }
-            if (oppFacts.length) {
-                factsHtml += `<div style="margin-bottom:4px;font-weight:500;margin-top:6px;">Противник:</div>`;
-                oppFacts.forEach(f => {
-                    factsHtml += `<div class="fact-item"><span class="fact-label">•</span> ${f}</div>`;
-                });
-            }
-            resultFacts.innerHTML = factsHtml;
-
             resultOverlay.classList.add('active');
-
-            if (duelState.round >= duelState.maxRounds) {
-                resultNextBtn.textContent = '🏆 Завершить игру';
-                resultNextBtn.disabled = false;
-            } else {
-                const nextNum = duelState.round + 1;
-                const nextText = nextNum === 1 ? 'ПЕРВЫЙ' : nextNum === 2 ? 'ВТОРОЙ' : 'ТРЕТИЙ';
-                resultNextBtn.textContent = '▶ ' + nextText + ' РАУНД';
-                resultNextBtn.disabled = false;
-            }
         }
 
-        function hideRoundResults() {
+        function hideResults() {
             resultOverlay.classList.remove('active');
             duelState.showingResults = false;
         }
 
-        // Кнопки на экране результатов
-        resultNextBtn.onclick = function() {
-            hideRoundResults();
-
-            if (duelState.round >= duelState.maxRounds) {
-                endDuelGame();
-                return;
-            }
-
-            startNextRound();
+        resultCloseBtn.onclick = function() {
+            hideResults();
         };
 
-        resultCloseBtn.onclick = function() {
-            hideRoundResults();
-            if (!duelState.gameOver) {
-                setupFeedback.textContent = '🎯 Раунд завершён. Нажмите "Следующий раунд" для продолжения.';
-                setupFeedback.className = 'feedback info';
+        resultsBtn.onclick = function() {
+            if (duelState.totalFilms === 0) {
+                setupFeedback.textContent = '❌ Нет загаданных фильмов';
+                setupFeedback.className = 'feedback error';
+                return;
             }
+            showResults();
         };
 
         // ============================================================
@@ -2116,14 +2156,13 @@
                 sendToPeer('duel_mode', { active: false });
                 addChat('❌ Хост вышел из режима Подстава', 'system');
                 hideModal();
-                hideRoundResults();
+                hideResults();
             }
         }
 
         setupModeBtn.onclick = toggleDuelMode;
 
         function startDuelSetup() {
-            duelState.round = 0;
             duelState.gameOver = false;
             duelState.roundActive = false;
             duelState.roundEnded = false;
@@ -2132,7 +2171,7 @@
             duelState.bothDone = false;
             duelState.timerSkipped = false;
 
-            // Сброс данных игроков
+            // Сброс данных игроков для новой игры
             duelState.my.film = null;
             duelState.my.filmId = null;
             duelState.my.media = null;
@@ -2146,8 +2185,10 @@
             duelState.my.hintUsed = false;
             duelState.my.attempts = 0;
             duelState.my.wrongAttempts = 0;
+            duelState.my.score = 0;
             duelState.my.roundScore = 0;
             duelState.my.guessHistory = [];
+            duelState.my.playerNumber = 1;
 
             duelState.opp.film = null;
             duelState.opp.filmId = null;
@@ -2162,12 +2203,16 @@
             duelState.opp.hintUsed = false;
             duelState.opp.attempts = 0;
             duelState.opp.wrongAttempts = 0;
+            duelState.opp.score = 0;
             duelState.opp.roundScore = 0;
             duelState.opp.guessHistory = [];
+            duelState.opp.playerNumber = 2;
+
+            duelState.totalFilms = 0;
+            duelState.filmHistory = [];
 
             gameOverArea.classList.add('hidden');
             duelFrames.style.display = 'grid';
-            updateDuelUI();
             setupFeedback.textContent = '🎯 Выберите фильм в появившемся окне';
             setupFeedback.className = 'feedback info';
             oppGuessInput.disabled = true;
@@ -2183,18 +2228,16 @@
             myReadyStatus.textContent = '⏳ Ожидание выбора';
             myFilmTitle.textContent = 'Ваш фильм (для оппонента)';
             oppFilmTitle.textContent = 'Фильм оппонента (для вас)';
-            roundInfo.textContent = '🎯 Выбор фильмов';
+            roundInfo.textContent = '🎯 Режим ПОДСТАВА';
             timerText.textContent = '⏱️ Ожидание...';
             timerFill.style.width = '100%';
             timerFill.className = 'fill';
-            myScoreDuel.textContent = duelState.my.score;
-            oppScoreDuel.textContent = duelState.opp.score;
-            myScoreLabel.textContent = myName;
-            oppScoreLabel.textContent = 'Противник';
             finalMyName.textContent = myName;
             finalOppName.textContent = 'Противник';
 
             document.querySelectorAll('.hint-card').forEach(el => el.remove());
+
+            updateInfoPanel();
         }
 
         function handleDuelChosen(data) {
@@ -2207,6 +2250,7 @@
             duelState.opp.filmName = data.name || 'Без названия';
             duelState.opp.facts = data.facts || [];
             duelState.opp.hintData = data.hintData || null;
+            duelState.opp.playerNumber = data.playerNumber || 2;
             duelState.opp.chosen = true;
             duelState.opp.status = 'inpr';
 
@@ -2217,9 +2261,17 @@
 
         function checkBothChosen() {
             if (duelState.my.chosen && duelState.opp.chosen) {
-                const roundNum = duelState.round + 1;
-                const roundText = roundNum === 1 ? 'ПЕРВЫЙ' : roundNum === 2 ? 'ВТОРОЙ' : 'ТРЕТИЙ';
-                roundInfo.textContent = '🎯 ' + roundText + ' РАУНД';
+                // Добавляем фильмы в историю
+                duelState.totalFilms += 2;
+                duelState.filmHistory.push({
+                    name: duelState.my.filmName,
+                    author: myName + ' (#' + duelState.my.playerNumber + ')'
+                });
+                duelState.filmHistory.push({
+                    name: duelState.opp.filmName,
+                    author: 'Противник (#' + duelState.opp.playerNumber + ')'
+                });
+                updateInfoPanel();
 
                 setupFeedback.textContent = '🎯 Оба загадали! Игра начинается!';
                 setupFeedback.className = 'feedback success';
@@ -2252,13 +2304,12 @@
         }
 
         function startDuelRound() {
-            duelState.round++;
             duelState.roundActive = true;
             duelState.roundEnded = false;
             duelState.bothDone = false;
             duelState.timerSkipped = false;
 
-            // Сброс статусов для нового раунда
+            // Сброс статусов
             duelState.my.status = 'inpr';
             duelState.my.guessed = false;
             duelState.my.surrendered = false;
@@ -2279,11 +2330,6 @@
 
             duelState.timer = 120;
 
-            const roundNum = duelState.round;
-            const roundText = roundNum === 1 ? 'ПЕРВЫЙ' : roundNum === 2 ? 'ВТОРОЙ' : 'ТРЕТИЙ';
-            roundInfo.textContent = '🎯 ' + roundText + ' РАУНД';
-            updateDuelUI();
-
             oppGuessInput.disabled = false;
             oppGuessBtn.disabled = false;
             oppHintBtn.disabled = false;
@@ -2300,9 +2346,9 @@
 
             startDuelTimer();
 
-            sendToPeer('duel_round_start', { round: duelState.round });
+            sendToPeer('duel_round_start', {});
 
-            addChat('🎯 ' + roundText + ' РАУНД начался!', 'system');
+            addChat('🎯 Новый раунд начался!', 'system');
 
             document.querySelectorAll('.hint-card').forEach(el => el.remove());
 
@@ -2344,13 +2390,6 @@
             const percent = (duelState.timer / 120) * 100;
             timerFill.style.width = Math.max(0, percent) + '%';
             timerText.textContent = '⏱️ ' + Math.max(0, duelState.timer) + 'с';
-        }
-
-        function updateDuelUI() {
-            myScoreDuel.textContent = duelState.my.score;
-            oppScoreDuel.textContent = duelState.opp.score;
-            myScoreLabel.textContent = myName;
-            oppScoreLabel.textContent = 'Противник';
         }
 
         function updatePlayerStatusUI(player) {
@@ -2398,7 +2437,7 @@
             endDuelRound();
         }
 
-        // Кнопка скипа — всегда активна, всегда доступна
+        // Кнопка скипа — всегда активна
         skipTimerBtn.onclick = function() {
             if (!duelMode) {
                 setupFeedback.textContent = '❌ Режим Подстава не активен';
@@ -2439,7 +2478,7 @@
             return false;
         }
 
-        // Угадывание для меня (я угадываю фильм оппонента)
+        // Угадывание для меня
         function handleOppGuess() {
             if (!duelMode || !duelState.roundActive || duelState.gameOver) return;
             if (duelState.my.status === 'done') {
@@ -2485,6 +2524,7 @@
                 oppSurrenderBtn.disabled = true;
 
                 updatePlayerStatusUI('my');
+                updateInfoPanel();
 
                 sendToPeer('duel_guess_result', {
                     player: 'me',
@@ -2500,8 +2540,6 @@
                 });
 
                 addChat('🎯 <strong>' + myName + '</strong> угадал фильм!', 'system');
-
-                updateDuelUI();
 
                 if (duelState.my.status === 'done' && duelState.opp.status === 'done') {
                     duelState.bothDone = true;
@@ -2548,6 +2586,7 @@
                     oppGuessStatus.style.color = '#e74c3c';
 
                     updatePlayerStatusUI('my');
+                    updateInfoPanel();
 
                     sendToPeer('duel_guess_result', {
                         player: 'me',
@@ -2559,8 +2598,6 @@
                         status: 'done',
                         guessHistory: duelState.my.guessHistory
                     });
-
-                    updateDuelUI();
 
                     if (duelState.my.status === 'done' && duelState.opp.status === 'done') {
                         duelState.bothDone = true;
@@ -2606,6 +2643,7 @@
             oppSurrenderBtn.disabled = true;
 
             updatePlayerStatusUI('my');
+            updateInfoPanel();
 
             sendToPeer('duel_surrender', {
                 player: 'me',
@@ -2618,8 +2656,6 @@
 
             addChat('🏳️ <strong>' + myName + '</strong> сдался!', 'system');
 
-            updateDuelUI();
-
             if (duelState.my.status === 'done' && duelState.opp.status === 'done') {
                 duelState.bothDone = true;
                 endDuelRound();
@@ -2628,7 +2664,7 @@
 
         oppSurrenderBtn.onclick = handleSurrender;
 
-        // Подсказка — только для меня, только локально
+        // Подсказка — только для меня
         function useMyHint() {
             if (!duelMode || !duelState.roundActive || duelState.gameOver) return;
             if (duelState.my.status === 'done') {
@@ -2714,11 +2750,10 @@
 
             updatePlayerStatusUI('my');
             updatePlayerStatusUI('opp');
+            updateInfoPanel();
 
-            showRoundResults();
-
+            // Отправляем данные оппоненту
             sendToPeer('duel_round_end', {
-                round: duelState.round,
                 myScore: duelState.my.score,
                 oppScore: duelState.opp.score,
                 myGuessed: duelState.my.guessed,
@@ -2736,16 +2771,32 @@
                 myFacts: duelState.my.facts,
                 oppFacts: duelState.opp.facts,
                 myStatus: duelState.my.status,
-                oppStatus: duelState.opp.status
+                oppStatus: duelState.opp.status,
+                totalFilms: duelState.totalFilms,
+                filmHistory: duelState.filmHistory
             });
 
-            const roundText = duelState.round === 1 ? 'ПЕРВЫЙ' : duelState.round === 2 ? 'ВТОРОЙ' : 'ТРЕТИЙ';
-            addChat('🏁 ' + roundText + ' РАУНД завершён!', 'system');
+            addChat('🏁 Раунд завершён!', 'system');
+
+            // Проверяем, не пора ли показать итоги
+            if (duelState.totalFilms >= 6 && !duelState.showingResults && !duelState.gameOver) {
+                setTimeout(() => {
+                    showResults();
+                }, 500);
+            }
+
+            // Запускаем новый раунд автоматически
+            setTimeout(() => {
+                if (!duelState.gameOver && !duelState.showingResults) {
+                    startNewRound();
+                }
+            }, 2000);
         }
 
-        function startNextRound() {
+        function startNewRound() {
             if (duelState.gameOver) return;
 
+            // Сброс выбора для нового раунда
             duelState.my.chosen = false;
             duelState.opp.chosen = false;
             duelState.my.film = null;
@@ -2778,12 +2829,13 @@
             duelState.bothDone = false;
             duelState.timerSkipped = false;
 
-            const nextRound = duelState.round + 1;
-            const roundText = nextRound === 1 ? 'ПЕРВЫЙ' : nextRound === 2 ? 'ВТОРОЙ' : 'ТРЕТИЙ';
-            roundInfo.textContent = '🎯 ' + roundText + ' РАУНД';
+            // Обновляем номера игроков для нового раунда
+            duelState.my.playerNumber = 1;
+            duelState.opp.playerNumber = 2;
 
+            // Начинаем заново
             startDuelSetup();
-            setupFeedback.textContent = '🎯 ' + roundText + ' РАУНД. Загадайте новый фильм.';
+            setupFeedback.textContent = '🎯 Загадайте новый фильм!';
             setupFeedback.className = 'feedback info';
             oppGuessInput.disabled = true;
             oppGuessBtn.disabled = true;
@@ -2800,7 +2852,7 @@
             document.querySelectorAll('.hint-card').forEach(el => el.remove());
 
             setTimeout(() => {
-                showModal('🎬 ' + roundText + ' РАУНД', 'Загадайте новый фильм для оппонента');
+                showModal('🎬 Новый раунд', 'Загадайте новый фильм для оппонента');
             }, 500);
         }
 
@@ -2808,7 +2860,7 @@
             duelState.gameOver = true;
             duelState.roundActive = false;
             stopDuelTimer();
-            hideRoundResults();
+            hideResults();
 
             duelFrames.style.display = 'none';
             gameOverArea.classList.remove('hidden');
@@ -2839,7 +2891,9 @@
             sendToPeer('duel_game_end', {
                 myScore: duelState.my.score,
                 oppScore: duelState.opp.score,
-                winner: winner
+                winner: winner,
+                totalFilms: duelState.totalFilms,
+                filmHistory: duelState.filmHistory
             });
         }
 
@@ -2869,7 +2923,7 @@
                         normalMode.classList.remove('hidden');
                         addChat('❌ Хост вышел из режима Подстава', 'system');
                         hideModal();
-                        hideRoundResults();
+                        hideResults();
                     }
                     break;
 
@@ -2881,7 +2935,6 @@
 
                 case 'duel_round_start':
                     if (!isHost && data.data) {
-                        duelState.round = data.data.round;
                         duelState.roundActive = true;
                         duelState.roundEnded = false;
                         duelState.bothDone = false;
@@ -2907,12 +2960,6 @@
 
                         duelState.timer = 120;
 
-                        const roundNum = duelState.round;
-                        const roundText = roundNum === 1 ? 'ПЕРВЫЙ' : roundNum === 2 ? 'ВТОРОЙ' : 'ТРЕТИЙ';
-                        roundInfo.textContent = '🎯 ' + roundText + ' РАУНД';
-                        updateDuelUI();
-                        startDuelTimer();
-
                         oppGuessInput.disabled = false;
                         oppGuessBtn.disabled = false;
                         oppHintBtn.disabled = false;
@@ -2926,10 +2973,12 @@
                         setupFeedback.textContent = '⏱️ Угадайте фильм оппонента! 120 секунд.';
                         setupFeedback.className = 'feedback warning';
 
+                        startDuelTimer();
+
                         document.querySelectorAll('.hint-card').forEach(el => el.remove());
 
                         renderDuelFrames();
-                        addChat('🎯 ' + roundText + ' РАУНД начался!', 'system');
+                        addChat('🎯 Новый раунд начался!', 'system');
                     }
                     break;
 
@@ -2973,7 +3022,7 @@
                             }
                             duelState.opp.attempts = (data.data.attempts) || duelState.opp.attempts + 1;
                             updatePlayerStatusUI('opp');
-                            updateDuelUI();
+                            updateInfoPanel();
 
                             if (duelState.my.status === 'done' && duelState.opp.status === 'done') {
                                 duelState.bothDone = true;
@@ -3001,7 +3050,7 @@
                             }
                             duelState.my.attempts = (data.data.attempts) || duelState.my.attempts + 1;
                             updatePlayerStatusUI('my');
-                            updateDuelUI();
+                            updateInfoPanel();
 
                             if (duelState.my.status === 'done' && duelState.opp.status === 'done') {
                                 duelState.bothDone = true;
@@ -3021,7 +3070,7 @@
                         myReadyStatus.className = 'ready-status surrendered';
                         myReadyStatus.textContent = '🏳️ Оппонент сдался';
                         updatePlayerStatusUI('opp');
-                        updateDuelUI();
+                        updateInfoPanel();
                         addChat('🏳️ Противник сдался!', 'system');
 
                         if (duelState.my.status === 'done' && duelState.opp.status === 'done') {
@@ -3033,7 +3082,6 @@
 
                 case 'duel_round_end':
                     if (data.data && !isHost) {
-                        duelState.round = data.data.round;
                         duelState.my.score = data.data.oppScore;
                         duelState.opp.score = data.data.myScore;
                         duelState.my.guessed = data.data.oppGuessed;
@@ -3050,26 +3098,30 @@
                         duelState.opp.facts = data.data.myFacts || [];
                         duelState.my.status = data.data.oppStatus || 'done';
                         duelState.opp.status = data.data.myStatus || 'done';
+                        duelState.totalFilms = data.data.totalFilms || duelState.totalFilms;
+                        duelState.filmHistory = data.data.filmHistory || duelState.filmHistory;
                         duelState.roundActive = false;
                         duelState.roundEnded = true;
                         duelState.bothDone = true;
                         stopDuelTimer();
-                        updateDuelUI();
                         updatePlayerStatusUI('my');
                         updatePlayerStatusUI('opp');
+                        updateInfoPanel();
 
-                        showRoundResults();
+                        addChat('🏁 Раунд завершён!', 'system');
 
-                        const roundText = duelState.round === 1 ? 'ПЕРВЫЙ' : duelState.round === 2 ? 'ВТОРОЙ' : 'ТРЕТИЙ';
-                        addChat('🏁 ' + roundText + ' РАУНД завершён!', 'system');
-
-                        if (duelState.round >= duelState.maxRounds) {
+                        if (duelState.totalFilms >= 6 && !duelState.showingResults && !duelState.gameOver) {
                             setTimeout(() => {
-                                if (!duelState.gameOver) {
-                                    endDuelGame();
-                                }
+                                showResults();
                             }, 500);
                         }
+
+                        // Запускаем новый раунд автоматически
+                        setTimeout(() => {
+                            if (!duelState.gameOver && !duelState.showingResults) {
+                                startNewRound();
+                            }
+                        }, 2000);
                     }
                     break;
 
@@ -3079,20 +3131,25 @@
                         duelState.roundActive = false;
                         duelState.roundEnded = true;
                         stopDuelTimer();
-                        hideRoundResults();
+                        hideResults();
                         duelFrames.style.display = 'none';
                         gameOverArea.classList.remove('hidden');
                         finalMyScore.textContent = data.data.oppScore;
                         finalOppScore.textContent = data.data.myScore;
+                        finalMyName.textContent = myName;
+                        finalOppName.textContent = 'Противник';
                         winnerDisplay.textContent = data.data.winner;
                         if (data.data.winner.includes('Победитель')) {
                             winnerDisplay.style.color = '#2ecc71';
                         } else {
                             winnerDisplay.style.color = '#f39c12';
                         }
+                        duelState.totalFilms = data.data.totalFilms || duelState.totalFilms;
+                        duelState.filmHistory = data.data.filmHistory || duelState.filmHistory;
                         setupFeedback.textContent = '🏁 Игра окончена!';
                         setupFeedback.className = 'feedback success';
                         addChat('🏁 Игра окончена!', 'system');
+                        updateInfoPanel();
                     }
                     break;
             }
@@ -3372,7 +3429,7 @@
                             stopDuelTimer();
                             duelState.gameOver = false;
                             hideModal();
-                            hideRoundResults();
+                            hideResults();
                         }
                     }
                     break;
@@ -3571,7 +3628,7 @@
                 duelState.gameOver = false;
                 duelState.roundActive = false;
                 hideModal();
-                hideRoundResults();
+                hideResults();
             }
         }
 
@@ -3615,6 +3672,8 @@
 
             duelState.my.score = 0;
             duelState.opp.score = 0;
+            duelState.totalFilms = 0;
+            duelState.filmHistory = [];
 
             startDuelSetup();
             setupFeedback.textContent = '🎯 Новая игра! Загадайте фильм.';
@@ -3623,9 +3682,10 @@
             setTimeout(() => {
                 showModal('🎬 Новая игра', 'Загадайте новый фильм для оппонента');
             }, 500);
+            updateInfoPanel();
         };
 
-        console.log('🎬 Угадай фильм — режим ПОДСТАВА (ПОЛНАЯ ПЕРЕПИСЬ)');
+        console.log('🎬 Угадай фильм — режим ПОДСТАВА (БЕЗ РАУНДОВ)');
         console.log('👤 Ваш ID:', myId);
         console.log('🎯 Для включения подставы нажмите кнопку "Подстава" (только хост)');
     </script>
