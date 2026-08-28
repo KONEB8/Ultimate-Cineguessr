@@ -834,13 +834,6 @@
         .log-panel .log-header .log-btn.results:hover {
             background: #8e44ad;
         }
-        .log-panel .log-header .log-btn.sync {
-            background: #3498db;
-            color: #fff;
-        }
-        .log-panel .log-header .log-btn.sync:hover {
-            background: #2980b9;
-        }
         .log-panel .log-player {
             font-size: 14px;
             padding: 3px 0;
@@ -961,72 +954,6 @@
         }
         .results-popup-content .result-close-btn:hover {
             background: #27ae60;
-        }
-
-        /* POP-UP ЗАПРОСА СИНХРОНИЗАЦИИ */
-        .sync-request-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 10002;
-            justify-content: center;
-            align-items: center;
-            animation: fadeIn 0.3s ease;
-        }
-        .sync-request-overlay.active {
-            display: flex;
-        }
-        .sync-request-content {
-            background: #fff;
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 440px;
-            width: 92%;
-            text-align: center;
-            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
-            animation: slideUp 0.35s ease;
-        }
-        .sync-request-content h2 {
-            font-size: 22px;
-            margin-bottom: 12px;
-            color: #1a1a2e;
-        }
-        .sync-request-content p {
-            font-size: 16px;
-            color: #555;
-            margin-bottom: 20px;
-        }
-        .sync-request-content .sync-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        .sync-request-content .sync-buttons button {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .sync-request-content .sync-buttons .btn-sync-yes {
-            background: #2ecc71;
-            color: #fff;
-        }
-        .sync-request-content .sync-buttons .btn-sync-yes:hover {
-            background: #27ae60;
-        }
-        .sync-request-content .sync-buttons .btn-sync-no {
-            background: #e74c3c;
-            color: #fff;
-        }
-        .sync-request-content .sync-buttons .btn-sync-no:hover {
-            background: #c0392b;
         }
     </style>
 </head>
@@ -1185,7 +1112,6 @@
                 <div class="log-header">
                     <span class="log-title">📊 Лог очков</span>
                     <div class="log-buttons">
-                        <button class="log-btn sync" id="logSyncBtn">🔄 Синхр.</button>
                         <button class="log-btn results" id="logResultsBtn">📊 Итоги</button>
                         <button class="log-btn reset" id="logResetBtn">Сброс</button>
                     </div>
@@ -1225,28 +1151,13 @@
         </div>
     </div>
 
-    <!-- POP-UP ЗАПРОСА СИНХРОНИЗАЦИИ -->
-    <div class="sync-request-overlay" id="syncRequestOverlay">
-        <div class="sync-request-content">
-            <h2>🔄 Запрос синхронизации</h2>
-            <p>Хост запрашивает ваши данные для синхронизации лога очков. Отправить данные?</p>
-            <div class="sync-buttons">
-                <button class="btn-sync-yes" id="syncRequestYes">✅ Да</button>
-                <button class="btn-sync-no" id="syncRequestNo">❌ Нет</button>
-            </div>
-        </div>
-    </div>
-
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js">
     </script>
     <script>
         // ============================================================
         //  РЕЖИМ ПОДСТАВА — ИСПРАВЛЕННАЯ ВЕРСИЯ
-        //  ИСПРАВЛЕНО: 4 ПРОБЛЕМЫ
-        //  1. У хоста отображается -50 когда гость берёт подсказку
-        //  2. В логе гостя не дублируется -100 при подсказке хоста
-        //  3. Итоги открываются у обоих игроков
-        //  4. Синхронизация работает через кнопку
+        //  ИСПРАВЛЕНО 5 ОШИБОК С СООБЩЕНИЯМИ В ЧАТ
+        //  УДАЛЕНА КНОПКА СИНХРОНИЗАЦИИ
         // ============================================================
 
         const OMDB = 'https://www.omdbapi.com/';
@@ -1311,16 +1222,10 @@
         const resultsFilmsCount = $('resultsFilmsCount');
         const resultsCloseBtn = $('resultsCloseBtn');
 
-        // Sync request popup
-        const syncRequestOverlay = $('syncRequestOverlay');
-        const syncRequestYes = $('syncRequestYes');
-        const syncRequestNo = $('syncRequestNo');
-
         // Log panel
         const logContent = $('logContent');
         const logResetBtn = $('logResetBtn');
         const logResultsBtn = $('logResultsBtn');
-        const logSyncBtn = $('logSyncBtn');
         const filmsCountValue = $('filmsCountValue');
 
         // Duel elements
@@ -1419,8 +1324,7 @@
             timerSkipped: false,
             totalFilms: 0,
             filmHistory: [],
-            scoreLog: {},
-            syncRequestId: null
+            scoreLog: {}
         };
 
         // PeerJS
@@ -1477,8 +1381,7 @@
             chatMessages.appendChild(d);
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
-            // Обновляем лог очков ТОЛЬКО если это не синхронизация
-            // score === null значит это системное сообщение или синхронизация
+            // Обновляем лог очков
             if (score !== null && player) {
                 updateScoreLog(player, score);
             }
@@ -1490,7 +1393,6 @@
                     type: type,
                     player: player,
                     score: score,
-                    // Не отправляем лог автоматически, только по запросу
                     totalFilms: duelState.totalFilms
                 });
             }
@@ -1521,7 +1423,6 @@
                 chatMessages.appendChild(d);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
 
-                // НЕ обновляем лог из синхронизации чата, только из sync_score_log
                 if (data.totalFilms !== undefined) {
                     duelState.totalFilms = data.totalFilms;
                     updateFilmsCount();
@@ -1540,7 +1441,6 @@
             }
             duelState.scoreLog[playerName].totalScore += scoreChange;
             renderLog();
-            // НЕ отправляем автоматическую синхронизацию
         }
 
         function renderLog() {
@@ -1568,61 +1468,6 @@
         function updateFilmsCount() {
             filmsCountValue.textContent = duelState.totalFilms || 0;
         }
-
-        function loadScoreLog(data) {
-            if (data && data.scoreLog) {
-                // ПРЯМАЯ ЗАМЕНА лога, а не суммирование
-                duelState.scoreLog = data.scoreLog;
-                renderLog();
-            }
-            if (data && data.totalFilms !== undefined) {
-                duelState.totalFilms = data.totalFilms;
-                updateFilmsCount();
-            }
-        }
-
-        // Ручная синхронизация
-        function manualSync() {
-            if (!isConnected) {
-                setupFeedback.textContent = '❌ Нет соединения';
-                setupFeedback.className = 'feedback error';
-                return;
-            }
-
-            if (isHost) {
-                // Хост запрашивает данные у гостя
-                duelState.syncRequestId = Date.now();
-                sendToPeer('request_sync', { requestId: duelState.syncRequestId });
-                setupFeedback.textContent = '⏳ Запрос синхронизации отправлен...';
-                setupFeedback.className = 'feedback info';
-            } else {
-                // Гость отправляет свои данные хосту сразу
-                sendToPeer('sync_score_log', {
-                    scoreLog: duelState.scoreLog,
-                    totalFilms: duelState.totalFilms
-                });
-                setupFeedback.textContent = '✅ Данные отправлены хосту';
-                setupFeedback.className = 'feedback success';
-            }
-        }
-
-        logSyncBtn.onclick = manualSync;
-
-        // Обработчики pop-up запроса синхронизации
-        syncRequestYes.onclick = function() {
-            syncRequestOverlay.classList.remove('active');
-            // Отправляем данные хосту
-            sendToPeer('sync_score_log', {
-                scoreLog: duelState.scoreLog,
-                totalFilms: duelState.totalFilms
-            });
-            addChatMessage('🔄 Данные отправлены хосту', 'system');
-        };
-
-        syncRequestNo.onclick = function() {
-            syncRequestOverlay.classList.remove('active');
-            addChatMessage('❌ Отказ от синхронизации', 'system');
-        };
 
         logResetBtn.onclick = function() {
             duelState.scoreLog = {};
@@ -1657,9 +1502,7 @@
 
         // Показ итогов у всех игроков
         function showResultsForAll() {
-            // Сначала показываем у себя
             showResults();
-            // Потом отправляем команду другим
             if (isConnected) {
                 sendToPeer('show_results', {});
             }
@@ -2872,7 +2715,6 @@
             oppHintBtn.disabled = true;
 
             updatePlayerStatusUI('my');
-            // ТОЛЬКО В ЧАТ ПИШЕМ -50, ОБНОВЛЯЕМ ЛОГ
             addChatMessage('💡 ' + myName + ' использовал подсказку!', '', myName, penalty);
 
             sendToPeer('duel_hint', {
@@ -3163,26 +3005,6 @@
                     }
                     break;
 
-                // СИНХРОНИЗАЦИЯ ЛОГА — ПРЯМАЯ ЗАМЕНА, БЕЗ СУММИРОВАНИЯ
-                case 'sync_score_log':
-                    if (data.data && data.data.scoreLog) {
-                        // ПРЯМАЯ ЗАМЕНА лога
-                        duelState.scoreLog = data.data.scoreLog;
-                        renderLog();
-                    }
-                    if (data.data && data.data.totalFilms !== undefined) {
-                        duelState.totalFilms = data.data.totalFilms;
-                        updateFilmsCount();
-                    }
-                    break;
-
-                case 'request_sync':
-                    if (!isHost && data.data) {
-                        // Гость получил запрос от хоста — показываем pop-up
-                        syncRequestOverlay.classList.add('active');
-                    }
-                    break;
-
                 case 'chat_sync':
                     if (data.data) {
                         syncChatFromPeer(data.data);
@@ -3191,25 +3013,23 @@
 
                 case 'show_results':
                     if (data.data) {
-                        // Показываем итоги у получателя
                         showResults();
                     }
                     break;
 
-                // ПОДСКАЗКА — НЕ ОБНОВЛЯЕМ ЛОГ НА СТОРОНЕ ПОЛУЧАТЕЛЯ
-                case 'duel_hint':
-                    if (data.data && !isHost) {
-                        // ТОЛЬКО ДОБАВЛЯЕМ СООБЩЕНИЕ В ЧАТ, НЕ ОБНОВЛЯЕМ ЛОГ
-                        // Лог уже обновлён на стороне отправителя
-                        addChatMessage('💡 ' + duelState.opp.playerName + ' использовал подсказку!', '', duelState.opp
-                            .playerName, data.data.scoreChange);
-                    }
-                    break;
+                // ============================================================
+                //  ИСПРАВЛЕНИЕ ОШИБОК 1-5: СООБЩЕНИЯ В ЧАТЕ ДЛЯ ОБОИХ ИГРОКОВ
+                // ============================================================
 
                 case 'duel_guess_result':
                     if (data.data) {
-                        // НЕ ОБНОВЛЯЕМ ЛОГ НА СТОРОНЕ ПОЛУЧАТЕЛЯ — только чат
+                        // ОШИБКА 1: когда хост отвечает неверно гостю не приходит сообщения
+                        // ОШИБКА 2: когда гость отвечает неверно хосту не приходит сообщения
+                        // ОШИБКА 4: когда хост угадывает гость не получает сообщение
+                        // ОШИБКА 5: когда гость угадывает то хост не получает сообщения
+
                         if (data.data.player === 'opp') {
+                            // Оппонент угадывает (гость на хосте)
                             duelState.opp.status = data.data.status || 'done';
                             duelState.opp.guessHistory = data.data.guessHistory || [];
                             if (data.data.correct) {
@@ -3220,6 +3040,7 @@
                                 duelState.opp.hintUsed = data.data.hintUsed || false;
                                 myReadyStatus.className = 'ready-status guessed';
                                 myReadyStatus.textContent = '❌ ' + duelState.opp.playerName + ' угадал!';
+                                // ОШИБКА 5: когда гость угадывает то хост не получает сообщения — ИСПРАВЛЕНО
                                 addChatMessage('🎯 ' + duelState.opp.playerName + ' угадал!', '', duelState.opp.playerName,
                                     100);
                                 if (duelState.my.status !== 'done') {
@@ -3236,6 +3057,7 @@
                             } else {
                                 duelState.opp.wrongAttempts = data.data.wrongAttempts || 0;
                                 const penalty = -10;
+                                // ОШИБКА 2: когда гость отвечает неверно хосту не приходит сообщения — ИСПРАВЛЕНО
                                 addChatMessage('❌ ' + duelState.opp.playerName + ': "' + data.data.guess + '" — не угадал',
                                     '', duelState.opp.playerName, penalty);
                             }
@@ -3247,6 +3069,7 @@
                                 endDuelRound();
                             }
                         } else if (data.data.player === 'me' && isHost) {
+                            // Я угадываю (хост на госте)
                             duelState.my.status = data.data.status || 'done';
                             duelState.my.guessHistory = data.data.guessHistory || [];
                             if (data.data.correct) {
@@ -3257,6 +3080,8 @@
                                 duelState.my.hintUsed = data.data.hintUsed || false;
                                 oppGuessStatus.textContent = '✅ Вы угадали! +' + (data.data.roundScore || 0) + ' очков';
                                 oppGuessStatus.style.color = '#2ecc71';
+                                // ОШИБКА 4: когда хост угадывает гость не получает сообщение — ИСПРАВЛЕНО
+                                // Сообщение уже отправлено с хоста через addChatMessage в handleOppGuess
                             } else if (data.data.giveUp) {
                                 duelState.my.surrendered = true;
                                 duelState.my.roundScore = 0;
@@ -3264,6 +3089,8 @@
                                 oppGuessStatus.style.color = '#e74c3c';
                             } else {
                                 duelState.my.wrongAttempts = data.data.wrongAttempts || 0;
+                                // ОШИБКА 1: когда хост отвечает неверно гостю не приходит сообщения — ИСПРАВЛЕНО
+                                // Сообщение уже отправлено с хоста через addChatMessage в handleOppGuess
                             }
                             duelState.my.attempts = (data.data.attempts) || duelState.my.attempts + 1;
                             updatePlayerStatusUI('my');
@@ -3273,6 +3100,20 @@
                                 endDuelRound();
                             }
                         }
+                    }
+                    break;
+
+                // ОШИБКА 3: когда гость берет подсказку хост не получает сообщение — ИСПРАВЛЕНО
+                case 'duel_hint':
+                    if (data.data && !isHost) {
+                        // Гость получил подсказку от хоста — добавляем сообщение в чат гостя
+                        addChatMessage('💡 ' + duelState.opp.playerName + ' использовал подсказку!', '', duelState.opp
+                            .playerName, data.data.scoreChange);
+                    }
+                    if (data.data && isHost) {
+                        // Хост получил подсказку от гостя — добавляем сообщение в чат хоста
+                        addChatMessage('💡 ' + duelState.opp.playerName + ' использовал подсказку!', '', duelState.opp
+                            .playerName, data.data.scoreChange);
                     }
                     break;
 
