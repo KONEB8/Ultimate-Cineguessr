@@ -1241,8 +1241,12 @@
     </script>
     <script>
         // ============================================================
-        //  РЕЖИМ ПОДСТАВА — ФИНАЛЬНАЯ ВЕРСИЯ
-        //  ВСЕ СЛОВА "ПРОТИВНИК" УДАЛЕНЫ
+        //  РЕЖИМ ПОДСТАВА — ИСПРАВЛЕННАЯ ВЕРСИЯ
+        //  ИСПРАВЛЕНО: 4 ПРОБЛЕМЫ
+        //  1. У хоста отображается -50 когда гость берёт подсказку
+        //  2. В логе гостя не дублируется -100 при подсказке хоста
+        //  3. Итоги открываются у обоих игроков
+        //  4. Синхронизация работает через кнопку
         // ============================================================
 
         const OMDB = 'https://www.omdbapi.com/';
@@ -1473,7 +1477,8 @@
             chatMessages.appendChild(d);
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
-            // Обновляем лог очков
+            // Обновляем лог очков ТОЛЬКО если это не синхронизация
+            // score === null значит это системное сообщение или синхронизация
             if (score !== null && player) {
                 updateScoreLog(player, score);
             }
@@ -1485,7 +1490,7 @@
                     type: type,
                     player: player,
                     score: score,
-                    scoreLog: duelState.scoreLog,
+                    // Не отправляем лог автоматически, только по запросу
                     totalFilms: duelState.totalFilms
                 });
             }
@@ -1516,10 +1521,7 @@
                 chatMessages.appendChild(d);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
 
-                if (data.scoreLog) {
-                    duelState.scoreLog = data.scoreLog;
-                    renderLog();
-                }
+                // НЕ обновляем лог из синхронизации чата, только из sync_score_log
                 if (data.totalFilms !== undefined) {
                     duelState.totalFilms = data.totalFilms;
                     updateFilmsCount();
@@ -1538,13 +1540,7 @@
             }
             duelState.scoreLog[playerName].totalScore += scoreChange;
             renderLog();
-
-            if (isConnected) {
-                sendToPeer('sync_score_log', {
-                    scoreLog: duelState.scoreLog,
-                    totalFilms: duelState.totalFilms
-                });
-            }
+            // НЕ отправляем автоматическую синхронизацию
         }
 
         function renderLog() {
@@ -1575,6 +1571,7 @@
 
         function loadScoreLog(data) {
             if (data && data.scoreLog) {
+                // ПРЯМАЯ ЗАМЕНА лога, а не суммирование
                 duelState.scoreLog = data.scoreLog;
                 renderLog();
             }
@@ -1630,12 +1627,6 @@
         logResetBtn.onclick = function() {
             duelState.scoreLog = {};
             renderLog();
-            if (isConnected) {
-                sendToPeer('sync_score_log', {
-                    scoreLog: duelState.scoreLog,
-                    totalFilms: duelState.totalFilms
-                });
-            }
             addChatMessage('🔄 Лог очков сброшен', 'system');
         };
 
@@ -1666,10 +1657,12 @@
 
         // Показ итогов у всех игроков
         function showResultsForAll() {
+            // Сначала показываем у себя
+            showResults();
+            // Потом отправляем команду другим
             if (isConnected) {
                 sendToPeer('show_results', {});
             }
-            showResults();
         }
 
         resultsCloseBtn.onclick = function() {
@@ -2879,6 +2872,7 @@
             oppHintBtn.disabled = true;
 
             updatePlayerStatusUI('my');
+            // ТОЛЬКО В ЧАТ ПИШЕМ -50, ОБНОВЛЯЕМ ЛОГ
             addChatMessage('💡 ' + myName + ' использовал подсказку!', '', myName, penalty);
 
             sendToPeer('duel_hint', {
@@ -3169,8 +3163,10 @@
                     }
                     break;
 
+                // СИНХРОНИЗАЦИЯ ЛОГА — ПРЯМАЯ ЗАМЕНА, БЕЗ СУММИРОВАНИЯ
                 case 'sync_score_log':
                     if (data.data && data.data.scoreLog) {
+                        // ПРЯМАЯ ЗАМЕНА лога
                         duelState.scoreLog = data.data.scoreLog;
                         renderLog();
                     }
@@ -3195,16 +3191,24 @@
 
                 case 'show_results':
                     if (data.data) {
+                        // Показываем итоги у получателя
                         showResults();
+                    }
+                    break;
+
+                // ПОДСКАЗКА — НЕ ОБНОВЛЯЕМ ЛОГ НА СТОРОНЕ ПОЛУЧАТЕЛЯ
+                case 'duel_hint':
+                    if (data.data && !isHost) {
+                        // ТОЛЬКО ДОБАВЛЯЕМ СООБЩЕНИЕ В ЧАТ, НЕ ОБНОВЛЯЕМ ЛОГ
+                        // Лог уже обновлён на стороне отправителя
+                        addChatMessage('💡 ' + duelState.opp.playerName + ' использовал подсказку!', '', duelState.opp
+                            .playerName, data.data.scoreChange);
                     }
                     break;
 
                 case 'duel_guess_result':
                     if (data.data) {
-                        if (data.data.scoreChange !== undefined && data.data.playerName) {
-                            updateScoreLog(data.data.playerName, data.data.scoreChange);
-                        }
-
+                        // НЕ ОБНОВЛЯЕМ ЛОГ НА СТОРОНЕ ПОЛУЧАТЕЛЯ — только чат
                         if (data.data.player === 'opp') {
                             duelState.opp.status = data.data.status || 'done';
                             duelState.opp.guessHistory = data.data.guessHistory || [];
@@ -3272,16 +3276,6 @@
                     }
                     break;
 
-                case 'duel_hint':
-                    if (data.data && !isHost) {
-                        if (data.data.scoreChange !== undefined && data.data.playerName) {
-                            updateScoreLog(data.data.playerName, data.data.scoreChange);
-                            addChatMessage('💡 ' + duelState.opp.playerName + ' использовал подсказку!', '',
-                                duelState.opp.playerName, data.data.scoreChange);
-                        }
-                    }
-                    break;
-
                 case 'duel_surrender':
                     if (data.data && !isHost) {
                         duelState.opp.status = data.data.status || 'done';
@@ -3294,10 +3288,6 @@
                         updatePlayerStatusUI('opp');
                         addChatMessage('🏳️ ' + duelState.opp.playerName + ' сдался. Фильм: "' + (data.data.name || '—') +
                             '"', '', duelState.opp.playerName);
-
-                        if (data.data.scoreChange !== undefined && data.data.playerName) {
-                            updateScoreLog(data.data.playerName, data.data.scoreChange);
-                        }
 
                         if (duelState.my.status === 'done' && duelState.opp.status === 'done') {
                             duelState.bothDone = true;
@@ -3905,15 +3895,9 @@
             }, 500);
             renderLog();
             updateFilmsCount();
-            if (isConnected) {
-                sendToPeer('sync_score_log', {
-                    scoreLog: duelState.scoreLog,
-                    totalFilms: duelState.totalFilms
-                });
-            }
         };
 
-        console.log('🎬 Угадай фильм — режим ПОДСТАВА (ФИНАЛ)');
+        console.log('🎬 Угадай фильм — режим ПОДСТАВА (ИСПРАВЛЕННЫЙ)');
         console.log('👤 Ваш ID:', myId);
         console.log('🎯 Для включения подставы нажмите кнопку "Подстава" (только хост)');
     </script>
