@@ -1241,7 +1241,8 @@
     </script>
     <script>
         // ============================================================
-        //  РЕЖИМ ПОДСТАВА — ФИНАЛЬНАЯ ВЕРСИЯ С ИСПРАВЛЕНИЯМИ
+        //  РЕЖИМ ПОДСТАВА — ФИНАЛЬНАЯ ВЕРСИЯ
+        //  ВСЕ СЛОВА "ПРОТИВНИК" УДАЛЕНЫ
         // ============================================================
 
         const OMDB = 'https://www.omdbapi.com/';
@@ -1359,7 +1360,7 @@
             isConnected = false;
         let myId = 'p' + Date.now() + Math.random().toString(36).slice(2, 6);
         let playerNumber = 1;
-        let oppName = 'Противник';
+        let oppName = 'Игрок' + Math.floor(Math.random() * 100) + 100;
 
         // Duel state
         let duelMode = false;
@@ -1402,7 +1403,7 @@
                 guessHistory: [],
                 hintData: null,
                 playerNumber: 2,
-                playerName: 'Противник'
+                playerName: oppName
             },
             timer: 120,
             timerInterval: null,
@@ -2411,7 +2412,7 @@
             duelState.opp.facts = data.facts || [];
             duelState.opp.hintData = data.hintData || null;
             duelState.opp.playerNumber = data.playerNumber || 2;
-            duelState.opp.playerName = data.playerName || 'Противник';
+            duelState.opp.playerName = data.playerName || 'Без имени';
             oppName = duelState.opp.playerName;
             duelState.opp.chosen = true;
             duelState.opp.status = 'inpr';
@@ -3039,7 +3040,7 @@
             finalMyScore.textContent = duelState.my.score;
             finalOppScore.textContent = duelState.opp.score;
             finalMyName.textContent = duelState.my.playerName || myName;
-            finalOppName.textContent = duelState.opp.playerName || 'Противник';
+            finalOppName.textContent = duelState.opp.playerName || 'Игрок';
 
             let winner = '';
             if (duelState.my.score > duelState.opp.score) {
@@ -3047,8 +3048,8 @@
                 winnerDisplay.textContent = '🏆 ' + (duelState.my.playerName || myName) + ' победил!';
                 winnerDisplay.style.color = '#2ecc71';
             } else if (duelState.opp.score > duelState.my.score) {
-                winner = '🏆 Победитель: ' + (duelState.opp.playerName || 'Противник') + '!';
-                winnerDisplay.textContent = '🏆 ' + (duelState.opp.playerName || 'Противник') + ' победил!';
+                winner = '🏆 Победитель: ' + (duelState.opp.playerName || 'Игрок') + '!';
+                winnerDisplay.textContent = '🏆 ' + (duelState.opp.playerName || 'Игрок') + ' победил!';
                 winnerDisplay.style.color = '#3498db';
             } else {
                 winner = '🤝 Ничья!';
@@ -3323,7 +3324,7 @@
                         duelState.opp.facts = data.data.myFacts || [];
                         duelState.my.status = data.data.oppStatus || 'done';
                         duelState.opp.status = data.data.myStatus || 'done';
-                        duelState.my.playerName = data.data.oppPlayerName || 'Противник';
+                        duelState.my.playerName = data.data.oppPlayerName || 'Игрок';
                         duelState.opp.playerName = data.data.myPlayerName || myName;
                         duelState.my.playerNumber = data.data.oppPlayerNumber || 2;
                         duelState.opp.playerNumber = data.data.myPlayerNumber || 1;
@@ -3357,7 +3358,7 @@
                         gameOverArea.classList.remove('hidden');
                         finalMyScore.textContent = data.data.oppScore;
                         finalOppScore.textContent = data.data.myScore;
-                        finalMyName.textContent = data.data.oppPlayerName || 'Противник';
+                        finalMyName.textContent = data.data.oppPlayerName || 'Игрок';
                         finalOppName.textContent = data.data.myPlayerName || myName;
                         winnerDisplay.textContent = data.data.winner;
                         if (data.data.winner.includes('Победитель')) {
