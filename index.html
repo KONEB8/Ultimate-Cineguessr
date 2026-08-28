@@ -635,6 +635,10 @@
             box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
             animation: slideUp 0.35s ease;
         }
+        @keyframes slideUp {
+            from { transform: translateY(30px) scale(0.95); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
         .modal-content .modal-icon {
             font-size: 52px;
             margin-bottom: 10px;
@@ -1148,7 +1152,10 @@
     </script>
     <script>
         // ============================================================
-        //  РЕЖИМ ПОДСТАВА — С ЛОГ-ПАНЕЛЬЮ И ИТОГАМИ
+        //  РЕЖИМ ПОДСТАВА — ФИНАЛЬНАЯ ВЕРСИЯ
+        //  ОЧКИ: +100 ЗА УГАДЫВАНИЕ, -10 ЗА ПОПЫТКУ, -50 ЗА ПОДСКАЗКУ
+        //  ЛОГ СИНХРОНИЗИРОВАН ЧЕРЕЗ PEERJS
+        //  ПОП-АП ИТОГОВ ОТКРЫВАЕТСЯ У ВСЕХ
         // ============================================================
 
         const OMDB = 'https://www.omdbapi.com/';
@@ -1315,8 +1322,8 @@
             filmHistory: [],
             // Лог очков: { playerName: { number, totalScore } }
             scoreLog: {},
-            // Для синхронизации чата
-            chatHistory: []
+            // Флаг для синхронизации
+            scoreLogSynced: false
         };
 
         // PeerJS
@@ -1349,7 +1356,7 @@
             addChatMessage('📊 Статистика сброшена', 'system'); };
 
         // ---------- ЧАТ ----------
-        function addChatMessage(text, type = '', player = null, score = null, scoreLogUpdate = null) {
+        function addChatMessage(text, type = '', player = null, score = null) {
             const d = document.createElement('div');
             d.className = 'msg' + (type ? ' ' + type : '');
             if (player) {
@@ -1372,25 +1379,18 @@
             chatMessages.appendChild(d);
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
-            // Сохраняем в историю чата для синхронизации
-            const chatEntry = {
-                text: text,
-                type: type,
-                player: player,
-                score: score,
-                scoreLogUpdate: scoreLogUpdate
-            };
-            duelState.chatHistory.push(chatEntry);
-
             // Обновляем лог очков
-            if (scoreLogUpdate !== null && player) {
-                updateScoreLog(player, scoreLogUpdate);
+            if (score !== null && player) {
+                updateScoreLog(player, score);
             }
 
             // Синхронизируем чат с другими игроками
             if (isConnected) {
                 sendToPeer('chat_sync', {
-                    chatEntry: chatEntry,
+                    text: text,
+                    type: type,
+                    player: player,
+                    score: score,
                     scoreLog: duelState.scoreLog,
                     totalFilms: duelState.totalFilms
                 });
@@ -1398,27 +1398,26 @@
         }
 
         function syncChatFromPeer(data) {
-            if (data && data.chatEntry) {
+            if (data && data.text !== undefined) {
                 // Добавляем сообщение в чат
-                const entry = data.chatEntry;
                 const d = document.createElement('div');
-                d.className = 'msg' + (entry.type ? ' ' + entry.type : '');
-                if (entry.player) {
+                d.className = 'msg' + (data.type ? ' ' + data.type : '');
+                if (data.player) {
                     const n = document.createElement('span');
-                    const isMe = entry.player === myName;
+                    const isMe = data.player === myName;
                     n.className = 'name' + (isMe ? ' me' : ' you');
-                    n.textContent = entry.player + ' ';
+                    n.textContent = data.player + ' ';
                     d.appendChild(n);
                 }
                 const t = document.createElement('span');
-                if (entry.score !== null) {
+                if (data.score !== null) {
                     const s = document.createElement('span');
-                    s.className = 'score-msg ' + (entry.score >= 0 ? 'positive' : 'negative');
-                    s.textContent = ' (' + (entry.score >= 0 ? '+' : '') + entry.score + ' очков)';
-                    t.textContent = entry.text;
+                    s.className = 'score-msg ' + (data.score >= 0 ? 'positive' : 'negative');
+                    s.textContent = ' (' + (data.score >= 0 ? '+' : '') + data.score + ' очков)';
+                    t.textContent = data.text;
                     t.appendChild(s);
                 } else {
-                    t.innerHTML = entry.text;
+                    t.innerHTML = data.text;
                 }
                 d.appendChild(t);
                 chatMessages.appendChild(d);
@@ -1530,6 +1529,14 @@
             resultsPopup.classList.add('active');
         }
 
+        // Показ итогов у всех игроков
+        function showResultsForAll() {
+            if (isConnected) {
+                sendToPeer('show_results', {});
+            }
+            showResults();
+        }
+
         resultsCloseBtn.onclick = function() {
             resultsPopup.classList.remove('active');
         };
@@ -1540,7 +1547,7 @@
             }
         });
 
-        logResultsBtn.onclick = showResults;
+        logResultsBtn.onclick = showResultsForAll;
 
         function updateOnline() {
             const count = Object.keys(players).length || (isConnected ? 1 : 0);
@@ -2528,9 +2535,8 @@
             if (isCorrect) {
                 duelState.my.guessed = true;
                 duelState.my.status = 'done';
-                let score = 100 - (duelState.my.wrongAttempts * 10);
-                if (duelState.my.hintUsed) score -= 50;
-                score = Math.max(0, score);
+                // ВСЕГДА +100 за угадывание
+                const score = 100;
                 duelState.my.roundScore = score;
                 duelState.my.score += score;
 
@@ -2544,7 +2550,8 @@
                 oppSurrenderBtn.disabled = true;
 
                 updatePlayerStatusUI('my');
-                addChatMessage('🎯 ' + myName + ' угадал!', '', myName, score, score);
+                // В чат пишем +100
+                addChatMessage('🎯 ' + myName + ' угадал!', '', myName, score);
 
                 sendToPeer('duel_guess_result', {
                     player: 'me',
@@ -2579,7 +2586,8 @@
                 oppGuessInput.value = '';
 
                 updatePlayerStatusUI('my');
-                addChatMessage('❌ ' + myName + ': "' + guess + '" — не угадал', '', myName, penalty, penalty);
+                // В чат пишем -10 за попытку
+                addChatMessage('❌ ' + myName + ': "' + guess + '" — не угадал', '', myName, penalty);
 
                 sendToPeer('duel_guess_result', {
                     player: 'me',
@@ -2688,7 +2696,7 @@
 
         oppSurrenderBtn.onclick = handleSurrender;
 
-        // Подсказка
+        // Подсказка - только -50 в чат
         function useMyHint() {
             if (!duelMode || !duelState.roundActive || duelState.gameOver) return;
             if (duelState.my.status === 'done') {
@@ -2731,7 +2739,8 @@
             oppHintBtn.disabled = true;
 
             updatePlayerStatusUI('my');
-            addChatMessage('💡 ' + myName + ' использовал подсказку!', '', myName, penalty, penalty);
+            // В чат пишем -50 за подсказку
+            addChatMessage('💡 ' + myName + ' использовал подсказку!', '', myName, penalty);
 
             sendToPeer('duel_hint', {
                 player: 'me',
@@ -3042,6 +3051,13 @@
                     }
                     break;
 
+                case 'show_results':
+                    if (data.data) {
+                        // Показываем итоги у всех игроков
+                        showResults();
+                    }
+                    break;
+
                 case 'duel_guess_result':
                     if (data.data) {
                         // Обновляем лог очков для оппонента
@@ -3060,7 +3076,7 @@
                                 duelState.opp.hintUsed = data.data.hintUsed || false;
                                 myReadyStatus.className = 'ready-status guessed';
                                 myReadyStatus.textContent = '❌ Оппонент угадал!';
-                                addChatMessage('🎯 Противник угадал!', '', 'Противник', duelState.opp.roundScore);
+                                addChatMessage('🎯 Противник угадал!', '', 'Противник', 100);
                                 if (duelState.my.status !== 'done') {
                                     setupFeedback.textContent = '❌ Оппонент угадал ваш фильм!';
                                     setupFeedback.className = 'feedback error';
@@ -3755,7 +3771,7 @@
             }
         };
 
-        console.log('🎬 Угадай фильм — режим ПОДСТАВА (финальная версия)');
+        console.log('🎬 Угадай фильм — режим ПОДСТАВА (ФИНАЛ)');
         console.log('👤 Ваш ID:', myId);
         console.log('🎯 Для включения подставы нажмите кнопку "Подстава" (только хост)');
     </script>
