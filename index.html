@@ -1039,9 +1039,9 @@
                     </div>
                     <div id="timerText" style="text-align:center;font-size:14px;color:#888;margin-bottom:8px;">⏱️ Ожидание...</div>
 
-                    <div class="skip-timer-block">
-                        <button id="skipTimerBtn">⏭️ Скипнуть таймер</button>
-                    </div>
+                    <div class="skip-timer-block" id="skipTimerBlock">
+    <button id="skipTimerBtn">⏭️ Скипнуть таймер</button>
+</div>
 
                     <div class="duel-frames" id="duelFrames">
                         <div class="frame-group">
@@ -2219,19 +2219,21 @@
                     showModal('🎬 Загадайте фильм', 'Введите название фильма, который вы хотите загадать оппоненту');
                 }, 500);
             } else {
-                setupMode.classList.add('hidden');
-                normalMode.classList.remove('hidden');
-                setupModeBtn.textContent = '🎯 Подстава';
-                setupModeBtn.className = 'purple';
-                stopDuelTimer();
-                duelState.gameOver = false;
-                duelState.roundActive = false;
-                gameOverArea.classList.add('hidden');
-                duelFrames.style.display = 'grid';
-                sendToPeer('duel_mode', { active: false });
-                addChatMessage('❌ Хост вышел из режима Подстава', 'system');
-                hideModal();
-            }
+    setupMode.classList.add('hidden');
+    normalMode.classList.remove('hidden');
+    setupModeBtn.textContent = '🎯 Подстава';
+    setupModeBtn.className = 'purple';
+    stopDuelTimer();
+    duelState.gameOver = false;
+    duelState.roundActive = false;
+    gameOverArea.classList.add('hidden');
+    duelFrames.style.display = 'grid';
+    sendToPeer('duel_mode', { active: false });
+    addChatMessage('❌ Хост вышел из режима Подстава', 'system');
+    hideModal();
+    // Скрываем кнопку скипа при выходе из режима
+    document.getElementById('skipTimerBlock').style.display = 'none';
+}
         }
 
         setupModeBtn.onclick = toggleDuelMode;
@@ -2310,6 +2312,10 @@
             if (isHost) {
                 modalConfirmBtn.disabled = true;
                 modalStatus.textContent = '⏳ Ждите, пока оппонент загадает...';
+                if (isHost) {
+        document.getElementById('skipTimerBlock').style.display = 'block';
+    } else {
+        document.getElementById('skipTimerBlock').style.display = 'none';
             }
         }
 
@@ -3426,24 +3432,28 @@
             chatSend.disabled = false;
 
             if (!isHost) {
-                roomCodeDisplay.textContent = room;
-                roomDisplay.style.display = 'inline-flex';
-                roomInfo.innerHTML = '🏠 Подключено к комнате <strong>' + room + '</strong>';
-                connectStatus.textContent = '✅ Подключено!';
-                connectStatus.style.color = '#2ecc71';
-                feedback.textContent = '✅ Подключено к комнате ' + room;
-                feedback.className = 'feedback success';
-                addChatMessage('👋 Вы вошли как <strong>' + myName + '</strong>', 'system');
-                setupModeBtn.classList.add('hidden');
-            } else {
-                addChatMessage('👤 Игрок подключился!', 'system');
-                setTimeout(() => {
-                    players[myId] = { name: myName, guessed: false };
-                    updateOnline();
-                    syncGame();
-                    setupModeBtn.classList.remove('hidden');
-                }, 300);
-            }
+    roomCodeDisplay.textContent = room;
+    roomDisplay.style.display = 'inline-flex';
+    roomInfo.innerHTML = '🏠 Подключено к комнате <strong>' + room + '</strong>';
+    connectStatus.textContent = '✅ Подключено!';
+    connectStatus.style.color = '#2ecc71';
+    feedback.textContent = '✅ Подключено к комнате ' + room;
+    feedback.className = 'feedback success';
+    addChatMessage('👋 Вы вошли как <strong>' + myName + '</strong>', 'system');
+    setupModeBtn.classList.add('hidden');
+    // Скрываем кнопку скипа для гостя
+    document.getElementById('skipTimerBlock').style.display = 'none';
+} else {
+    addChatMessage('👤 Игрок подключился!', 'system');
+    setTimeout(() => {
+        players[myId] = { name: myName, guessed: false };
+        updateOnline();
+        syncGame();
+        setupModeBtn.classList.remove('hidden');
+        // Показываем кнопку скипа для хоста
+        document.getElementById('skipTimerBlock').style.display = 'block';
+    }, 300);
+}
 
             c.on('data', (data) => {
                 handlePeerData(data);
