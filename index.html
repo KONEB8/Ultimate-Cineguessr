@@ -1152,10 +1152,7 @@
     </script>
     <script>
         // ============================================================
-        //  РЕЖИМ ПОДСТАВА — ИСПРАВЛЕННЫЙ
-        //  - Убраны блокировки кнопок у хоста, когда гость угадал
-        //  - Подсказка: -50, не -100
-        //  - Хост видит подсказку гостя
+        //  РЕЖИМ ПОДСТАВА — УБРАНЫ ВСЕ ЗАПРЕТЫ НА КНОПКАХ У ХОСТА
         // ============================================================
 
         const OMDB = 'https://www.omdbapi.com/';
@@ -2420,6 +2417,7 @@
 
             duelState.timer = 120;
 
+            // КНОПКИ ВСЕГДА АКТИВНЫ — УБИРАЕМ ВСЕ ЗАПРЕТЫ
             oppGuessInput.disabled = false;
             oppGuessBtn.disabled = false;
             oppHintBtn.disabled = false;
@@ -2571,14 +2569,9 @@
             return false;
         }
 
-        // Угадывание - УБРАНЫ БЛОКИРОВКИ КНОПОК ДЛЯ ХОСТА
+        // Угадывание — БЕЗ ЗАПРЕТОВ
         function handleOppGuess() {
             if (!duelMode || !duelState.roundActive || duelState.gameOver) return;
-            if (duelState.my.status === 'done') {
-                setupFeedback.textContent = '✅ Вы уже завершили этот раунд!';
-                setupFeedback.className = 'feedback success';
-                return;
-            }
             if (duelState.roundEnded) return;
 
             const guess = oppGuessInput.value.trim();
@@ -2632,8 +2625,6 @@
                     playerName: myName
                 });
 
-                // НЕ БЛОКИРУЕМ КНОПКИ У ХОСТА
-                // Просто проверяем, не завершился ли раунд
                 if (duelState.my.status === 'done' && duelState.opp.status === 'done') {
                     duelState.bothDone = true;
                     endDuelRound();
@@ -2715,11 +2706,6 @@
         // Сдаться
         function handleSurrender() {
             if (!duelMode || !duelState.roundActive || duelState.gameOver) return;
-            if (duelState.my.status === 'done') {
-                setupFeedback.textContent = 'Вы уже завершили этот раунд!';
-                setupFeedback.className = 'feedback success';
-                return;
-            }
             if (duelState.roundEnded) return;
 
             const oppName = duelState.opp.filmName || 'Без названия';
@@ -2761,19 +2747,9 @@
 
         oppSurrenderBtn.onclick = handleSurrender;
 
-        // ПОДСКАЗКА
+        // ПОДСКАЗКА — БЕЗ ЗАПРЕТОВ
         function useMyHint() {
             if (!duelMode || !duelState.roundActive || duelState.gameOver) return;
-            if (duelState.my.status === 'done') {
-                setupFeedback.textContent = 'Вы уже завершили этот раунд!';
-                setupFeedback.className = 'feedback success';
-                return;
-            }
-            if (duelState.my.hintUsed) {
-                setupFeedback.textContent = '💡 Вы уже использовали подсказку в этом раунде.';
-                setupFeedback.className = 'feedback warning';
-                return;
-            }
             if (duelState.roundEnded) return;
 
             const hintData = duelState.opp.hintData;
@@ -3080,6 +3056,7 @@
 
                         duelState.timer = 120;
 
+                        // КНОПКИ ВСЕГДА АКТИВНЫ
                         oppGuessInput.disabled = false;
                         oppGuessBtn.disabled = false;
                         oppHintBtn.disabled = false;
@@ -3115,11 +3092,11 @@
 
                 case 'sync_score_log':
                     if (data.data && data.data.scoreLog) {
-                        duelState.scoreLog = data.scoreLog;
+                        duelState.scoreLog = data.data.scoreLog;
                         renderLog();
                     }
                     if (data.data && data.data.totalFilms !== undefined) {
-                        duelState.totalFilms = data.totalFilms;
+                        duelState.totalFilms = data.data.totalFilms;
                         updateFilmsCount();
                     }
                     break;
@@ -3849,7 +3826,7 @@
             }
         };
 
-        console.log('🎬 Угадай фильм — режим ПОДСТАВА (ИСПРАВЛЕННЫЙ)');
+        console.log('🎬 Угадай фильм — режим ПОДСТАВА (УБРАНЫ ЗАПРЕТЫ)');
         console.log('👤 Ваш ID:', myId);
         console.log('🎯 Для включения подставы нажмите кнопку "Подстава" (только хост)');
     </script>
