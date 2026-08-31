@@ -758,11 +758,14 @@
             color: #f39c12;
         }
 
-        /* Отдельный блок для кнопки скипа */
+        /* Отдельный блок для кнопки скипа — только для хоста */
         .skip-timer-block {
-            display: flex;
+            display: none;
             justify-content: center;
             margin: 8px 0;
+        }
+        .skip-timer-block.visible {
+            display: flex;
         }
         .skip-timer-block button {
             padding: 8px 24px;
@@ -1040,8 +1043,8 @@
                     <div id="timerText" style="text-align:center;font-size:14px;color:#888;margin-bottom:8px;">⏱️ Ожидание...</div>
 
                     <div class="skip-timer-block" id="skipTimerBlock">
-    <button id="skipTimerBtn">⏭️ Скипнуть таймер</button>
-</div>
+                        <button id="skipTimerBtn">⏭️ Скипнуть таймер</button>
+                    </div>
 
                     <div class="duel-frames" id="duelFrames">
                         <div class="frame-group">
@@ -1152,7 +1155,7 @@
     </script>
     <script>
         // ============================================================
-        //  РЕЖИМ ПОДСТАВА — УБРАНЫ ВСЕ ЗАПРЕТЫ НА КНОПКАХ У ХОСТА
+        //  РЕЖИМ ПОДСТАВА — КНОПКА СКИПА ТОЛЬКО У ХОСТА
         // ============================================================
 
         const OMDB = 'https://www.omdbapi.com/';
@@ -1249,6 +1252,7 @@
         const finalOppScore = $('finalOppScore');
         const newDuelBtn = $('newDuelBtn');
         const skipTimerBtn = $('skipTimerBtn');
+        const skipTimerBlock = $('skipTimerBlock');
 
         // ---------- СОСТОЯНИЕ ----------
         let film = null,
@@ -1458,6 +1462,15 @@
             } else if (isHost) {
                 modalConfirmBtn.disabled = true;
                 modalStatus.textContent = '⏳ Ждите, пока оппонент загадает...';
+            }
+        }
+
+        function updateSkipButtonVisibility() {
+            // Кнопка скипа видна только хосту
+            if (isHost) {
+                skipTimerBlock.classList.add('visible');
+            } else {
+                skipTimerBlock.classList.remove('visible');
             }
         }
 
@@ -2215,25 +2228,25 @@
                 addChatMessage('🎯 Хост включил режим ПОДСТАВА!', 'system');
                 sendToPeer('duel_mode', { active: true });
                 startDuelSetup();
+                updateSkipButtonVisibility();
                 setTimeout(() => {
                     showModal('🎬 Загадайте фильм', 'Введите название фильма, который вы хотите загадать оппоненту');
                 }, 500);
             } else {
-    setupMode.classList.add('hidden');
-    normalMode.classList.remove('hidden');
-    setupModeBtn.textContent = '🎯 Подстава';
-    setupModeBtn.className = 'purple';
-    stopDuelTimer();
-    duelState.gameOver = false;
-    duelState.roundActive = false;
-    gameOverArea.classList.add('hidden');
-    duelFrames.style.display = 'grid';
-    sendToPeer('duel_mode', { active: false });
-    addChatMessage('❌ Хост вышел из режима Подстава', 'system');
-    hideModal();
-    // Скрываем кнопку скипа при выходе из режима
-    document.getElementById('skipTimerBlock').style.display = 'none';
-}
+                setupMode.classList.add('hidden');
+                normalMode.classList.remove('hidden');
+                setupModeBtn.textContent = '🎯 Подстава';
+                setupModeBtn.className = 'purple';
+                stopDuelTimer();
+                duelState.gameOver = false;
+                duelState.roundActive = false;
+                gameOverArea.classList.add('hidden');
+                duelFrames.style.display = 'grid';
+                sendToPeer('duel_mode', { active: false });
+                addChatMessage('❌ Хост вышел из режима Подстава', 'system');
+                hideModal();
+                updateSkipButtonVisibility();
+            }
         }
 
         setupModeBtn.onclick = toggleDuelMode;
@@ -2312,11 +2325,8 @@
             if (isHost) {
                 modalConfirmBtn.disabled = true;
                 modalStatus.textContent = '⏳ Ждите, пока оппонент загадает...';
-                if (isHost) {
-        document.getElementById('skipTimerBlock').style.display = 'block';
-    } else {
-        document.getElementById('skipTimerBlock').style.display = 'none';
             }
+            updateSkipButtonVisibility();
         }
 
         function handleDuelChosen(data) {
@@ -2423,7 +2433,7 @@
 
             duelState.timer = 120;
 
-            // КНОПКИ ВСЕГДА АКТИВНЫ — УБИРАЕМ ВСЕ ЗАПРЕТЫ
+            // КНОПКИ ВСЕГДА АКТИВНЫ
             oppGuessInput.disabled = false;
             oppGuessBtn.disabled = false;
             oppHintBtn.disabled = false;
@@ -2447,6 +2457,7 @@
             document.querySelectorAll('.hint-card').forEach(el => el.remove());
 
             renderDuelFrames();
+            updateSkipButtonVisibility();
         }
 
         function startDuelTimer() {
@@ -2535,8 +2546,13 @@
             endDuelRound();
         }
 
-        // Кнопка скипа
+        // Кнопка скипа — ТОЛЬКО ДЛЯ ХОСТА
         skipTimerBtn.onclick = function() {
+            if (!isHost) {
+                setupFeedback.textContent = '❌ Только хост может скипнуть таймер';
+                setupFeedback.className = 'feedback error';
+                return;
+            }
             if (!duelMode) {
                 setupFeedback.textContent = '❌ Режим Подстава не активен';
                 setupFeedback.className = 'feedback error';
@@ -2939,6 +2955,8 @@
                 modalStatus.textContent = '⏳ Ждите, пока оппонент загадает...';
             }
 
+            updateSkipButtonVisibility();
+
             setTimeout(() => {
                 showModal('🎬 Новый раунд', 'Загадайте новый фильм для оппонента');
             }, 500);
@@ -3062,7 +3080,6 @@
 
                         duelState.timer = 120;
 
-                        // КНОПКИ ВСЕГДА АКТИВНЫ
                         oppGuessInput.disabled = false;
                         oppGuessBtn.disabled = false;
                         oppHintBtn.disabled = false;
@@ -3083,11 +3100,13 @@
 
                         renderDuelFrames();
                         addChatMessage('🎯 Новый раунд начался!', 'system');
+                        updateSkipButtonVisibility();
                     }
                     break;
 
                 case 'duel_skip_timer':
                     if (!isHost && data.data) {
+                        // Гость получает уведомление, что хост скипнул таймер
                         if (!duelState.timerSkipped) {
                             duelState.timerSkipped = true;
                             addChatMessage('⏭️ ' + duelState.opp.playerName + ' скипнул таймер!', 'system');
@@ -3432,28 +3451,27 @@
             chatSend.disabled = false;
 
             if (!isHost) {
-    roomCodeDisplay.textContent = room;
-    roomDisplay.style.display = 'inline-flex';
-    roomInfo.innerHTML = '🏠 Подключено к комнате <strong>' + room + '</strong>';
-    connectStatus.textContent = '✅ Подключено!';
-    connectStatus.style.color = '#2ecc71';
-    feedback.textContent = '✅ Подключено к комнате ' + room;
-    feedback.className = 'feedback success';
-    addChatMessage('👋 Вы вошли как <strong>' + myName + '</strong>', 'system');
-    setupModeBtn.classList.add('hidden');
-    // Скрываем кнопку скипа для гостя
-    document.getElementById('skipTimerBlock').style.display = 'none';
-} else {
-    addChatMessage('👤 Игрок подключился!', 'system');
-    setTimeout(() => {
-        players[myId] = { name: myName, guessed: false };
-        updateOnline();
-        syncGame();
-        setupModeBtn.classList.remove('hidden');
-        // Показываем кнопку скипа для хоста
-        document.getElementById('skipTimerBlock').style.display = 'block';
-    }, 300);
-}
+                roomCodeDisplay.textContent = room;
+                roomDisplay.style.display = 'inline-flex';
+                roomInfo.innerHTML = '🏠 Подключено к комнате <strong>' + room + '</strong>';
+                connectStatus.textContent = '✅ Подключено!';
+                connectStatus.style.color = '#2ecc71';
+                feedback.textContent = '✅ Подключено к комнате ' + room;
+                feedback.className = 'feedback success';
+                addChatMessage('👋 Вы вошли как <strong>' + myName + '</strong>', 'system');
+                setupModeBtn.classList.add('hidden');
+            } else {
+                addChatMessage('👤 Игрок подключился!', 'system');
+                setTimeout(() => {
+                    players[myId] = { name: myName, guessed: false };
+                    updateOnline();
+                    syncGame();
+                    setupModeBtn.classList.remove('hidden');
+                }, 300);
+            }
+
+            // Обновляем видимость кнопки скипа при подключении
+            updateSkipButtonVisibility();
 
             c.on('data', (data) => {
                 handlePeerData(data);
@@ -3834,9 +3852,10 @@
                     totalFilms: duelState.totalFilms
                 });
             }
+            updateSkipButtonVisibility();
         };
 
-        console.log('🎬 Угадай фильм — режим ПОДСТАВА (УБРАНЫ ЗАПРЕТЫ)');
+        console.log('🎬 Угадай фильм — режим ПОДСТАВА (КНОПКА СКИПА ТОЛЬКО У ХОСТА)');
         console.log('👤 Ваш ID:', myId);
         console.log('🎯 Для включения подставы нажмите кнопку "Подстава" (только хост)');
     </script>
