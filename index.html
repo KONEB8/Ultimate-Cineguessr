@@ -1152,8 +1152,10 @@
     </script>
     <script>
         // ============================================================
-        //  РЕЖИМ ПОДСТАВА
-        //  КНОПКИ НЕ БЛОКИРУЮТСЯ ПРИ УГАДЫВАНИИ ОДНОГО ИГРОКА
+        //  РЕЖИМ ПОДСТАВА — ИСПРАВЛЕННЫЙ
+        //  - Убраны блокировки кнопок у хоста, когда гость угадал
+        //  - Подсказка: -50, не -100
+        //  - Хост видит подсказку гостя
         // ============================================================
 
         const OMDB = 'https://www.omdbapi.com/';
@@ -2140,6 +2142,7 @@
                 modalStatus.className = 'modal-status success';
                 modalStatus.textContent = '✅ Фильм выбран! "' + duelState.my.filmName + '"';
 
+                // Сбрасываем флаг для следующего раунда
                 duelState.oppChosenConfirmed = false;
                 if (isHost) {
                     modalConfirmBtn.disabled = true;
@@ -2568,11 +2571,11 @@
             return false;
         }
 
-        // Угадывание — НЕ БЛОКИРУЕМ КНОПКИ У ОППОНЕНТА
+        // Угадывание - УБРАНЫ БЛОКИРОВКИ КНОПОК ДЛЯ ХОСТА
         function handleOppGuess() {
             if (!duelMode || !duelState.roundActive || duelState.gameOver) return;
             if (duelState.my.status === 'done') {
-                setupFeedback.textContent = '✅ Вы уже угадали!';
+                setupFeedback.textContent = '✅ Вы уже завершили этот раунд!';
                 setupFeedback.className = 'feedback success';
                 return;
             }
@@ -2606,14 +2609,11 @@
                 setupFeedback.className = 'feedback success';
                 oppGuessStatus.textContent = '✅ Угадал! "' + oppName + '" (+' + score + ' очков)';
                 oppGuessStatus.style.color = '#2ecc71';
+                oppGuessInput.disabled = true;
+                oppGuessBtn.disabled = true;
+                oppHintBtn.disabled = true;
+                oppSurrenderBtn.disabled = true;
 
-                // НЕ БЛОКИРУЕМ КНОПКИ — только статус меняем
-                // oppGuessInput.disabled = true;
-                // oppGuessBtn.disabled = true;
-                // oppHintBtn.disabled = true;
-                // oppSurrenderBtn.disabled = true;
-
-                // Обновляем статус, но не блокируем кнопки
                 updatePlayerStatusUI('my');
                 addChatMessage('🎯 ' + myName + ' угадал!', '', myName, score);
 
@@ -2632,7 +2632,8 @@
                     playerName: myName
                 });
 
-                // Проверяем, не завершился ли раунд
+                // НЕ БЛОКИРУЕМ КНОПКИ У ХОСТА
+                // Просто проверяем, не завершился ли раунд
                 if (duelState.my.status === 'done' && duelState.opp.status === 'done') {
                     duelState.bothDone = true;
                     endDuelRound();
@@ -2672,7 +2673,10 @@
                     duelState.my.roundScore = 0;
                     setupFeedback.textContent = '💔 5 попыток! Фильм: "' + oppName + '". 0 очков.';
                     setupFeedback.className = 'feedback error';
-                    // Не блокируем кнопки
+                    oppGuessInput.disabled = true;
+                    oppGuessBtn.disabled = true;
+                    oppHintBtn.disabled = true;
+                    oppSurrenderBtn.disabled = true;
                     oppGuessStatus.textContent = '❌ Сдался. Фильм: "' + oppName + '"';
                     oppGuessStatus.style.color = '#e74c3c';
 
@@ -2730,12 +2734,10 @@
             setupFeedback.className = 'feedback error';
             oppGuessStatus.textContent = '🏳️ Сдался. Фильм: "' + oppName + '"';
             oppGuessStatus.style.color = '#e74c3c';
-
-            // НЕ БЛОКИРУЕМ КНОПКИ
-            // oppGuessInput.disabled = true;
-            // oppGuessBtn.disabled = true;
-            // oppHintBtn.disabled = true;
-            // oppSurrenderBtn.disabled = true;
+            oppGuessInput.disabled = true;
+            oppGuessBtn.disabled = true;
+            oppHintBtn.disabled = true;
+            oppSurrenderBtn.disabled = true;
 
             updatePlayerStatusUI('my');
             addChatMessage('🏳️ ' + myName + ' сдался. Фильм: "' + oppName + '"', '', myName);
@@ -3113,11 +3115,11 @@
 
                 case 'sync_score_log':
                     if (data.data && data.data.scoreLog) {
-                        duelState.scoreLog = data.data.scoreLog;
+                        duelState.scoreLog = data.scoreLog;
                         renderLog();
                     }
                     if (data.data && data.data.totalFilms !== undefined) {
-                        duelState.totalFilms = data.data.totalFilms;
+                        duelState.totalFilms = data.totalFilms;
                         updateFilmsCount();
                     }
                     break;
@@ -3847,7 +3849,7 @@
             }
         };
 
-        console.log('🎬 Угадай фильм — режим ПОДСТАВА (КНОПКИ НЕ БЛОКИРУЮТСЯ)');
+        console.log('🎬 Угадай фильм — режим ПОДСТАВА (ИСПРАВЛЕННЫЙ)');
         console.log('👤 Ваш ID:', myId);
         console.log('🎯 Для включения подставы нажмите кнопку "Подстава" (только хост)');
     </script>
